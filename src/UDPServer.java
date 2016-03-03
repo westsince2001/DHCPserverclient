@@ -40,11 +40,14 @@ class UDPServer {
 		byte[] receiveData = new byte[1024];
 		byte[] sendData = new byte[1024];
 		while (true) {
+			// receive packet
 			DatagramPacket receivePacket = new DatagramPacket(receiveData,
 					receiveData.length);
 			serverSocket.receive(receivePacket);
 			String sentence = new String(receivePacket.getData());
 			System.out.println("RECEIVED: " + sentence);
+			
+			// send packet
 			InetAddress IPAddress = receivePacket.getAddress();
 			int port = receivePacket.getPort();
 			String capitalizedSentence = sentence.toUpperCase();
