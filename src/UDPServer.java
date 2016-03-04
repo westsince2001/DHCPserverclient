@@ -22,19 +22,20 @@ Ook checken dat de poorten hieronder goed staan, en na iedere keer uitvoeren met
 class UDPServer {
 	public static void main(String args[]) throws Exception {
 		
-		DatagramSocket serverSocket = new DatagramSocket(9881);
+		System.out.println("has begun");
+		DatagramSocket serverSocket = new DatagramSocket(9883);
 		
-		/* Release connection resources on VM shutdown */
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-	        @Override
-			public void run() {
-	            System.out.println("In shutdown hook");
-	            
-	            serverSocket.close();
-	            
-	        }
-	    }, "Shutdown-thread"));
-		
+//		/* Release connection resources on VM shutdown */
+//		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+//	        @Override
+//			public void run() {
+//	            System.out.println("In shutdown hook");
+//	            
+//	            serverSocket.close();
+//	            
+//	        }
+//	    }, "Shutdown-thread"));
+//		
 		
 		
 		byte[] receiveData = new byte[1024];

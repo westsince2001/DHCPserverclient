@@ -1,4 +1,4 @@
-
+package threadedUDP;
 
 import java.io.*;
 import java.net.*;
@@ -8,7 +8,7 @@ import java.net.*;
 /* Ripped from 
  https://systembash.com/a-simple-java-udp-server-and-udp-client/
  */
-class UDPClient {
+class ClientUdp {
 	
 	public static void main(String args[]) throws Exception {
 		System.out.println("client started");
@@ -23,7 +23,7 @@ class UDPClient {
 		String sentence = inFromUser.readLine();
 		sendData = sentence.getBytes();
 		DatagramPacket sendPacket = new DatagramPacket(sendData,
-				sendData.length, IPAddress, 9888);
+				sendData.length, IPAddress, 9890);
 		clientSocket.send(sendPacket);
 		DatagramPacket receivePacket = new DatagramPacket(receiveData,
 				receiveData.length);
