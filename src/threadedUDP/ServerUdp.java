@@ -8,6 +8,7 @@ public class ServerUdp {
 	DatagramSocket serverSocket;
 
 	public static void main(String[] args) throws Exception {
+		
 		ServerUdp server = new ServerUdp();
 		server.startServer();
 	}
