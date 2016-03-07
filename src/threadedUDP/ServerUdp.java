@@ -2,11 +2,15 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
 import java.util.Properties;
 
-public class ServerUdp {
+public class ServerUdp extends Node {
 	DatagramSocket serverSocket;
+	InetAddress[] pool = {InetAddress.getByName("1.1.1.1")}; // Tijdelijk om te testen, later wordt het ingeladen via een file
+	HashMap<InetAddress, byte[]> leasedIP; // HashMap houdt bij welke InetAdresses al uitgeleend zijn en aan welke client, wel efficient om te moeten zoeken welke client welk ip adres heeft... 
 
+	
 	public static void main(String[] args) throws Exception {
 		
 		ServerUdp server = new ServerUdp();
@@ -33,7 +37,7 @@ public class ServerUdp {
 				// Serve client (in thread)
 				if (receivePacket != null) {
 					System.out.println("server received packet not null");
-					Handler h = new Handler(serverSocket, receivePacket);
+					Handler h = new Handler(this, serverSocket, receivePacket);
 					Thread thread = new Thread(h);
 					thread.start(); // run method run in handler
 				}
@@ -61,6 +65,78 @@ public class ServerUdp {
 		if (serverSocket != null) {
 			serverSocket.close();
 		}
+	}
+
+	@Override
+	DHCPMessage getDiscoverMsg() throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getDiscoverAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getOfferAnswer(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getRequestMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getRequestAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getAckAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getNakAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getReleaseMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getReleaseAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

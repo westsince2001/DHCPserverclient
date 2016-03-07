@@ -5,46 +5,44 @@ import java.net.*;
 import java.util.Properties;
 import java.util.Random;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+
 import DHCPEnum.Hlen;
-import DHCPEnum.Hops;
 import DHCPEnum.Htype;
-import DHCPEnum.MessageType;
 import DHCPEnum.Opcode;
 
-class ClientUdp {
+class ClientUdp extends Node{
 
 	
 	DatagramSocket clientSocket;
 	
 	public static void main(String args[]) {
-		new ClientUdp();
+		System.out.println(new String(new byte[4]));
+		ClientUdp client = new ClientUdp();
+		client.connectToServer();
 	}
 
 	public ClientUdp(){
-		connectToServer();
 	}
+	
 	public void connectToServer() {
 		try {
 			System.out.println("client started");
 			DatagramSocket clientSocket = new DatagramSocket();
 			
-			sendDiscover();
+			// Send DHCP_Discover
+			DHCPMessage msg = getDiscoverMsg();
+			sendMsg(msg);
 			
-			/* Algemene idee;
-			 * discover sturen, dan in een while(true) loop die altijd weer checkt of er berichten zijn en antwoord, dus structuur is gelijkaardig aan de server?
-			 * Threads zijn niet nodig wss?
-			 * 
-			 */
-			
+			// Answer incoming messages
 			while(true){
 				byte[] receiveData = new byte[1024];
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				clientSocket.receive(receivePacket);
 
 				byte[] byteMsg = receivePacket.getData();
-				DHCPMessage msg = new DHCPMessage(byteMsg);
-				handleMsg(msg);
-				
+				msg = new DHCPMessage(byteMsg);
+				msg.getType().getAnswer(msg, this);
 			}
 
 //			Oude code:
@@ -86,61 +84,105 @@ class ClientUdp {
 		String port = pro.getProperty("port");
 		int result = Integer.parseInt(port);
 		return result;
-	}
-	
-	private void handleMsg(DHCPMessage msg) throws IOException {
-		switch (msg.getType()) {
-		case DHCPDISCOVER:
-		case DHCPACK:
-			break;
-		case DHCPDECLINE:
-			break;
-		case DHCPINFORM:
-			break;
-		case DHCPNAK:
-			break;
-		case DHCPOFFER:
-			break;
-		case DHCPRELEASE:
-			break;
-		case DHCPREQUEST:
-			break;
-		}
-	}
-	
-	public void sendDiscover() throws IOException{
-		/* Aangezien alle soorten DHCP berichten (Discover, offer, ack...) ongeveer dezelfde structuur hebben
-		 * moet dit nog op een andere manier gebeuren
-		 * 
-		 */
-		
-		Opcode op = Opcode.BOOTREPLY;
+	}	
+
+	@Override
+	DHCPMessage getDiscoverMsg() throws UnknownHostException {
+		Opcode op = Opcode.BOOTREQUEST;
 		Htype htype = Htype.ETHERNET;
 		Hlen hlen = Hlen.INTERNET;
-		Hops hops = Hops.WHATEVER; /* TODO: hops (geen idee wat dat doet/is) */
+		byte hops = 0; /* TODO: hops */
 		Random rand = new Random();
 		int transactionID = rand.nextInt(2^32); // Random transaction id tussen 0 en 2^32
-		int num_of_seconds = 0; /* TODO: overnemen uit msg ? */
-		byte[] flags = new byte[0]; /* TODO: flags */
-		InetAddress clientIP = InetAddress.getByName("localhost"); /* TODO */
-		InetAddress serverIP = InetAddress.getByName("localhost"); /* TODO */
-		InetAddress gatewayIP = InetAddress.getByName("localhost"); /* TODO */
-		byte[] chaddr = new byte[0]; // TODO MAC adres uitlezen via JAVA?
-		byte[] sname = new byte[0]; // TODO
-		byte[] file = new byte[0]; // TODO
+		short num_of_seconds = 0; /* TODO: overnemen uit msg ? */
+		byte[] flags = new byte[] { 0x0, 0x0 }; /* TODO: flags moet nog naar broadcast */
+		InetAddress clientIP = InetAddress.getByName("0.0.0.0"); /* TODO */
+		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0"); /* TODO */
+		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); /* TODO */
+		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0"); /* TODO */
+		byte[] chaddr = new byte[16] ; // TODO MAC adres uitlezen via JAVA? -> http://stackoverflow.com/questions/6164167/get-mac-address-on-local-machine-with-java ?
+		byte[] sname = new byte[64]; // TODO
+		byte[] file = new byte[128]; // TODO
 		MessageType type = MessageType.DHCPDISCOVER;
 
 		DHCPMessage answer = new DHCPMessage(op, htype, hlen, hops,
-				transactionID, num_of_seconds, flags, clientIP, serverIP,
+				transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP,
 				gatewayIP, chaddr, sname, file, type);
 		
-		byte[] sendData = answer.encode();
-		
-		DatagramPacket sendPacket = new DatagramPacket(sendData,
-				sendData.length,  InetAddress.getByName("localhost"), getPort());
-		clientSocket.send(sendPacket);
+		return answer;	
 	}
 	
+	@Override
+	public DHCPMessage getDiscoverAnswer(DHCPMessage msg) {
+		System.out.println("Client received DHCP_DISCOVER but shouldn't process it.");
+		return null;
+	}
 	
+	@Override
+	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {	
+		System.out.println("Clients cannot send DHCP_OFFER.");
+		return null;
+	}
+
+	@Override
+	DHCPMessage getOfferAnswer(DHCPMessage msg) throws UnknownHostException {
+		DHCPMessage answer = getRequestMsg(msg); 
+		return answer;
+	}
+
+	@Override
+	DHCPMessage getRequestMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getRequestAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getAckAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getNakAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getReleaseMsg(DHCPMessage msg) throws UnknownHostException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	DHCPMessage getReleaseAnswer(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
+	private void sendMsg(DHCPMessage msg) throws IOException {
+		byte[] sendData = msg.encode();
+		DatagramPacket sendPacket = new DatagramPacket(sendData,
+				sendData.length, InetAddress.getByName("10.33.14.246"),
+				1234);
+		clientSocket.send(sendPacket);
+	}	
 }

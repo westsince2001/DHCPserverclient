@@ -1,6 +1,6 @@
 DHCP MESSAGE FORMAT
 
-   0                   1                   2                   3
+0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
@@ -32,9 +32,9 @@ DHCP MESSAGE FORMAT
    |                          options (variable)                   |
    +---------------------------------------------------------------+
 
-- Gehele lengte = 4 octets (1 octet = 8 bits)
-- Secs en flags elk 2 octets
-- De bovenste vier elk 1 octet
+
+
+DESCRIPTION OF FIELDS IN A DHCP MESSAGE
 
 FIELD      OCTETS       DESCRIPTION
    -----      ------       -----------
@@ -66,5 +66,248 @@ FIELD      OCTETS       DESCRIPTION
                     directory-path name in DHCPOFFER.
    options     var  Optional parameters field.  See the options
                     documents for a list of defined options.
+		    Message tussen 312 en 576 octets
 
-           Table 1:  Description of fields in a DHCP message
+
+
+
+
+
+FIELDS VOOR BEPAALDE TRANSACTIES
+
+Field      DHCPDISCOVER          DHCPREQUEST           DHCPDECLINE,
+           DHCPINFORM                                  DHCPRELEASE
+-----      ------------          -----------           -----------
+'op'       BOOTREQUEST           BOOTREQUEST           BOOTREQUEST
+'htype'    (From "Assigned Numbers" RFC)
+'hlen'     (Hardware address length in octets)
+'hops'     0                     0                     0
+'xid'      selected by client    'xid' from server     selected by
+                                 DHCPOFFER message     client
+'secs'     0 or seconds since    0 or seconds since    0
+           DHCP process started  DHCP process started
+'flags'    Set 'BROADCAST'       Set 'BROADCAST'       0
+           flag if client        flag if client
+           requires broadcast    requires broadcast
+           reply                 reply
+'ciaddr'   0 (DHCPDISCOVER)      0 or client's         0 (DHCPDECLINE)
+           client's              network address       client's network
+           network address       (BOUND/RENEW/REBIND)  address
+           (DHCPINFORM)                                (DHCPRELEASE)
+'yiaddr'   0                     0                     0
+'siaddr'   0                     0                     0
+'giaddr'   0                     0                     0
+'chaddr'   client's hardware     client's hardware     client's hardware
+           address               address               address
+'sname'    options, if           options, if           (unused)
+           indicated in          indicated in
+           'sname/file'          'sname/file'
+           option; otherwise     option; otherwise
+           unused                unused
+'file'     options, if           options, if           (unused)
+           indicated in          indicated in
+           'sname/file'          'sname/file'
+           option; otherwise     option; otherwise
+           unused                unused
+'options'  options               options               (unused)
+
+ANDERE
+- The client records its
+   own local time for later use in computing the lease expiration.
+
+
+OPTIONS BIJ BEPAALDE TRANSACTIES
+
+Option                     DHCPDISCOVER  DHCPREQUEST      DHCPDECLINE,
+                           DHCPINFORM                     DHCPRELEASE
+------                     ------------  -----------      -----------
+Requested IP address       MAY           MUST (in         MUST
+                           (DISCOVER)    SELECTING or     (DHCPDECLINE),
+                           MUST NOT      INIT-REBOOT)     MUST NOT
+                           (INFORM)      MUST NOT (in     (DHCPRELEASE)
+                                         BOUND or
+                                         RENEWING)
+IP address lease time      MAY           MAY              MUST NOT
+                           (DISCOVER)
+                           MUST NOT
+                           (INFORM)
+Use 'file'/'sname' fields  MAY           MAY              MAY
+DHCP message type          DHCPDISCOVER/ DHCPREQUEST      DHCPDECLINE/
+                           DHCPINFORM                     DHCPRELEASE
+Client identifier          MAY           MAY              MAY
+Vendor class identifier    MAY           MAY              MUST NOT
+Server identifier          MUST NOT      MUST (after      MUST
+                                         SELECTING)
+                                         MUST NOT (after
+                                         INIT-REBOOT,
+                                         BOUND, RENEWING
+                                         or REBINDING)
+Parameter request list     MAY           MAY              MUST NOT
+Maximum message size       MAY           MAY              MUST NOT
+Message                    SHOULD NOT    SHOULD NOT       SHOULD
+Site-specific              MAY           MAY              MUST NOT
+All others                 MAY           MAY              MUST NOT
+
+
+
+
+
+
+VERLOOP ALLOCATING NEW NETWORK ADDRESS
+
+                Server          Client          Server
+            (not selected)                    (selected)
+
+                  v               v               v
+                  |               |               |
+                  |     Begins initialization     |
+                  |               |               |
+                  | _____________/|\____________  |
+                  |/DHCPDISCOVER | DHCPDISCOVER  \|
+                  |               |               |
+              Determines          |          Determines
+             configuration        |         configuration
+                  |               |               |
+                  |\             |  ____________/ |
+                  | \________    | /DHCPOFFER     |
+                  | DHCPOFFER\   |/               |
+                  |           \  |                |
+                  |       Collects replies        |
+                  |             \|                |
+                  |     Selects configuration     |
+                  |               |               |
+                  | _____________/|\____________  |
+                  |/ DHCPREQUEST  |  DHCPREQUEST\ |
+                  |               |               |
+                  |               |     Commits configuration
+                  |               |               |
+                  |               | _____________/|
+                  |               |/ DHCPACK      |
+                  |               |               |
+                  |    Initialization complete    |
+                  |               |               |
+                  .               .               .
+                  .               .               .
+                  |               |               |
+                  |      Graceful shutdown        |
+                  |               |               |
+                  |               |\ ____________ |
+                  |               | DHCPRELEASE  \|
+                  |               |               |
+                  |               |        Discards lease
+                  |               |               |
+                  v               v               v
+
+REUSING PREVIOUSLY ALLOCATED NETWORK ADDRESS
+
+
+                Server          Client          Server
+
+                  v               v               v
+                  |                |               |
+                  |              Begins            |
+                  |          initialization        |
+                  |                |               |
+                  |                /|\             |
+                  |   _________ __/ | \__________  |
+                  | /DHCPREQU EST  |  DHCPREQUEST\ |
+                  |/               |              \|
+                  |                |               |
+               Locates             |            Locates
+            configuration          |         configuration
+                  |                |               |
+                  |\               |              /|
+                  | \              |  ___________/ |
+                  |  \             | /  DHCPACK    |
+                  |   \ _______    |/              |
+                  |     DHCPACK\   |               |
+                  |          Initialization        |
+                  |             complete           |
+                  |               \|               |
+                  |                |               |
+                  |           (Subsequent          |
+                  |             DHCPACKS           |
+                  |             ignored)           |
+                  |                |               |
+                  |                |               |
+                  v                v               v
+
+
+BESCHRIJVING TRANSACTIONS
+
+Message         Use
+   -------         ---
+
+   DHCPDISCOVER -  Client broadcast to locate available servers.
+
+   DHCPOFFER    -  Server to client in response to DHCPDISCOVER with
+                   offer of configuration parameters.
+
+   DHCPREQUEST  -  Client message to servers either (a) requesting
+                   offered parameters from one server and implicitly
+                   declining offers from all others, (b) confirming
+                   correctness of previously allocated address after,
+                   e.g., system reboot, or (c) extending the lease on a
+                   particular network address.
+		   !!!!!!!!!!! DCHPREQUEST MEERDERE FUNCTIES!!!!!!!!!!
+
+   DHCPACK      -  Server to client with configuration parameters,
+                   including committed network address.
+
+   DHCPNAK      -  Server to client indicating client's notion of network
+                   address is incorrect (e.g., client has moved to new
+                   subnet) or client's lease as expired
+
+
+   DHCPRELEASE  -  Client to server relinquishing network address and
+                   cancelling remaining lease.
+
+
+
+STATE TRANSITION DIAGRAM FOR DHCP CLIENTS
+
+
+ --------                               -------
+|        | +-------------------------->|       |<-------------------+
+| INIT-  | |     +-------------------->| INIT  |                    |
+| REBOOT |DHCPNAK/         +---------->|       |<---+               |
+|        |Restart|         |            -------     |               |
+ --------  |  DHCPNAK/     |               |                        |
+    |      Discard offer   |      -/Send DHCPDISCOVER               |
+-/Send DHCPREQUEST         |               |                        |
+    |      |     |      DHCPACK            v        |               |
+ -----------     |   (not accept.)/   -----------   |               |
+|           |    |  Send DHCPDECLINE |           |                  |
+| REBOOTING |    |         |         | SELECTING |<----+            |
+|           |    |        /          |           |     |DHCPOFFER/  |
+ -----------     |       /            -----------   |  |Collect     |
+    |            |      /                  |   |       |  replies   |
+DHCPACK/         |     /  +----------------+   +-------+            |
+Record lease, set|    |   v   Select offer/                         |
+timers T1, T2   ------------  send DHCPREQUEST      |               |
+    |   +----->|            |             DHCPNAK, Lease expired/   |
+    |   |      | REQUESTING |                  Halt network         |
+    DHCPOFFER/ |            |                       |               |
+    Discard     ------------                        |               |
+    |   |        |        |                   -----------           |
+    |   +--------+     DHCPACK/              |           |          |
+    |              Record lease, set    -----| REBINDING |          |
+    |                timers T1, T2     /     |           |          |
+    |                     |        DHCPACK/   -----------           |
+    |                     v     Record lease, set   ^               |
+    +----------------> -------      /timers T1,T2   |               |
+               +----->|       |<---+                |               |
+               |      | BOUND |<---+                |               |
+  DHCPOFFER, DHCPACK, |       |    |            T2 expires/   DHCPNAK/
+   DHCPNAK/Discard     -------     |             Broadcast  Halt network
+               |       | |         |            DHCPREQUEST         |
+               +-------+ |        DHCPACK/          |               |
+                    T1 expires/   Record lease, set |               |
+                 Send DHCPREQUEST timers T1, T2     |               |
+                 to leasing server |                |               |
+                         |   ----------             |               |
+                         |  |          |------------+               |
+                         +->| RENEWING |                            |
+                            |          |----------------------------+
+                             ----------
+ 
