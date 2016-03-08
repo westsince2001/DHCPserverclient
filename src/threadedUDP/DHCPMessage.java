@@ -54,9 +54,14 @@ public class DHCPMessage {
 		setSname(sname);
 		setFile(file);
 		
-		DHCPOptions newOptions = new DHCPOptions();
+		/*DHCPOptions newOptions = new DHCPOptions();
 		newOptions.addOption(53, new byte[]{(byte) type.getValue()}); // Ik *hoop* dat 53 de juiste code voor het message type is
-		setOptions(newOptions);
+		setOptions(newOptions);*/
+		
+		// dummy
+		this.options = new byte[]{99,(byte)130,83,99, // magic cookie
+				53,1,1, // DHPC discover value
+				(byte) 255}; // end option
 		
 		setType(type);
 
@@ -89,7 +94,7 @@ public class DHCPMessage {
 		setSname(DHCPMessage.getByteRange(byteMsg, 44, 108));
 		setFile(DHCPMessage.getByteRange(byteMsg, 108, 236));
 		
-		DHCPOptions newOptions = new DHCPOptions(DHCPMessage.getByteRange(byteMsg, 236, byteMsg.length));
+		/*DHCPOptions newOptions = new DHCPOptions(DHCPMessage.getByteRange(byteMsg, 236, byteMsg.length));
 		setOptions(newOptions);
 		
 		// Store type
@@ -98,7 +103,7 @@ public class DHCPMessage {
 			setType(type);
 		}else{
 			System.out.println("No DHCP Message type in given message!");
-		}
+		}*/
 		
 		
 	}
@@ -130,7 +135,8 @@ public class DHCPMessage {
 		buf.put(getChaddr());
 		buf.put(getSname());
 		buf.put(getFile());
-		buf.put(getOptions().encode());
+		//buf.put(getOptions().encode());
+		buf.put(options);
 		
 		return byteMsg;
 
@@ -151,7 +157,8 @@ public class DHCPMessage {
 	byte[] sname; // TODO byte of string?
 	byte[] file; // TODO byte of string?
 	MessageType type;
-	DHCPOptions options;
+	//DHCPOptions options;
+	byte[] options; // dummy
 
 	public Opcode getOpcode() {
 		return opcode;
@@ -273,12 +280,12 @@ public class DHCPMessage {
 		this.type = type;
 	}
 
-	public DHCPOptions getOptions() {
+	/*public DHCPOptions getOptions() {
 		return options;
 	}
 
 	public void setOptions(DHCPOptions options) {
 		this.options = options;
-	}
+	}*/
 
 }

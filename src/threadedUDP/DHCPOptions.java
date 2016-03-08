@@ -39,7 +39,7 @@ public class DHCPOptions {
 	 * @return
 	 * @throws UnknownHostException
 	 */
-	public byte[] getMagicCoookie() throws UnknownHostException{
+	public byte[] getMagicCookie() throws UnknownHostException{
 		return InetAddress.getByName("99.130.83.99").getAddress();
 	}
 	
@@ -58,7 +58,7 @@ public class DHCPOptions {
 		byte[] byteOptions = new byte[512]; // TODO Deze lengte klopt niet, moet dynamisch (?) bepaald worden
 		ByteBuffer buf = ByteBuffer.wrap(byteOptions);
 		
-		buf.put(getMagicCoookie());
+		buf.put(getMagicCookie());
 		
 		for (Map.Entry<Byte,byte[]> entry : options.entrySet()) {
 		    byte code = entry.getKey();
@@ -70,3 +70,4 @@ public class DHCPOptions {
 		return byteOptions;
 	}
 }
+

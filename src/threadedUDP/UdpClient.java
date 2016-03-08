@@ -13,11 +13,9 @@ import DHCPEnum.Opcode;
 
 class UdpClient extends Node{
 
-	
 	DatagramSocket clientSocket;
 	
 	public static void main(String args[]) {
-		System.out.println(new String(new byte[4]));
 		UdpClient client = new UdpClient();
 		client.connectToServer();
 	}
@@ -35,14 +33,19 @@ class UdpClient extends Node{
 			sendMsg(msg);
 			
 			// Answer incoming messages
-			while(true){
+			while(true){ // while (msg != null), achteraf connectie sluiten
+				
+				// Receive answer
 				byte[] receiveData = new byte[1024];
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				clientSocket.receive(receivePacket);
-
+				
+				// Reply to answer
 				byte[] byteMsg = receivePacket.getData();
+				System.out.println(byteMsg);
 				msg = new DHCPMessage(byteMsg);
 				msg.getType().getAnswer(msg, this);
+				// nog message zenden
 			}
 
 //			Oude code:
@@ -85,20 +88,30 @@ class UdpClient extends Node{
 		int result = Integer.parseInt(port);
 		return result;
 	}	
+	
+	
+	
+	
+	
+	
+	
+	/* TRANSACTIONS */
+	
+	// Discover
 
 	@Override
 	DHCPMessage getDiscoverMsg() throws UnknownHostException {
 		Opcode op = Opcode.BOOTREQUEST;
 		Htype htype = Htype.ETHERNET;
 		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0; /* TODO: hops */
+		byte hops = 0;
 		Random rand = new Random();
 		int transactionID = rand.nextInt(2^32); // Random transaction id tussen 0 en 2^32
 		short num_of_seconds = 0; /* TODO: overnemen uit msg ? */
 		byte[] flags = new byte[] { 0x0, 0x0 }; /* TODO: flags moet nog naar broadcast */
-		InetAddress clientIP = InetAddress.getByName("0.0.0.0"); /* TODO */
-		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0"); /* TODO */
-		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); /* TODO */
+		InetAddress clientIP = InetAddress.getByName("0.0.0.0"); // Client nog geen IP
+		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0"); // Client nog geen IP
+		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); // 0
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0"); /* TODO */
 		byte[] chaddr = new byte[16] ; // TODO MAC adres uitlezen via JAVA? -> http://stackoverflow.com/questions/6164167/get-mac-address-on-local-machine-with-java ?
 		byte[] sname = new byte[64]; // TODO
@@ -118,6 +131,8 @@ class UdpClient extends Node{
 		return null;
 	}
 	
+	//Offer
+	
 	@Override
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {	
 		System.out.println("Clients cannot send DHCP_OFFER.");
@@ -129,6 +144,8 @@ class UdpClient extends Node{
 		DHCPMessage answer = getRequestMsg(msg); 
 		return answer;
 	}
+	
+	// Request
 
 	@Override
 	DHCPMessage getRequestMsg(DHCPMessage msg) throws UnknownHostException {
@@ -141,6 +158,8 @@ class UdpClient extends Node{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	// Acknowledge
 
 	@Override
 	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
@@ -153,6 +172,8 @@ class UdpClient extends Node{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	// Not Acknowledge
 
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
@@ -165,12 +186,15 @@ class UdpClient extends Node{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	// Release
 
 	@Override
 	DHCPMessage getReleaseMsg(DHCPMessage msg) throws UnknownHostException {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
 	@Override
 	DHCPMessage getReleaseAnswer(DHCPMessage msg) {
@@ -178,10 +202,19 @@ class UdpClient extends Node{
 		return null;
 	}
 	
+	
+	
+	
+	
+	
+	
+	
+	/* SEND MESSAGE */
+	
 	private void sendMsg(DHCPMessage msg) throws IOException {
 		byte[] sendData = msg.encode();
 		DatagramPacket sendPacket = new DatagramPacket(sendData,
-				sendData.length, InetAddress.getByName("10.33.14.246"),
+				sendData.length, InetAddress.getByName("10.33.14.246"), // TODO moet nog aanpassen IP address
 				1234);
 		clientSocket.send(sendPacket);
 	}	
