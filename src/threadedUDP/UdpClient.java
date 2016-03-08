@@ -11,18 +11,18 @@ import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 
-class ClientUdp extends Node{
+class UdpClient extends Node{
 
 	
 	DatagramSocket clientSocket;
 	
 	public static void main(String args[]) {
 		System.out.println(new String(new byte[4]));
-		ClientUdp client = new ClientUdp();
+		UdpClient client = new UdpClient();
 		client.connectToServer();
 	}
 
-	public ClientUdp(){
+	public UdpClient(){
 	}
 	
 	public void connectToServer() {

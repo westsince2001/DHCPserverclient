@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Properties;
 
-public class ServerUdp extends Node {
+public class UdpServer extends Node {
 	DatagramSocket serverSocket;
 	InetAddress[] pool = {InetAddress.getByName("1.1.1.1")}; // Tijdelijk om te testen, later wordt het ingeladen via een file
 	HashMap<InetAddress, byte[]> leasedIP; // HashMap houdt bij welke InetAdresses al uitgeleend zijn en aan welke client, wel efficient om te moeten zoeken welke client welk ip adres heeft... 
@@ -13,11 +13,11 @@ public class ServerUdp extends Node {
 	
 	public static void main(String[] args) throws Exception {
 		
-		ServerUdp server = new ServerUdp();
+		UdpServer server = new UdpServer();
 		server.startServer();
 	}
 
-	public ServerUdp() throws Exception {
+	public UdpServer() throws Exception {
 		serverSocket = new DatagramSocket(getPort());
 	}
 

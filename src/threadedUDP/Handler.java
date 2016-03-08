@@ -8,11 +8,11 @@ import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 
 public class Handler implements Runnable {
-	ServerUdp server;
+	UdpServer server;
 	DatagramSocket serverSocket;
 	DatagramPacket receivePacket;
 
-	public Handler(ServerUdp server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
+	public Handler(UdpServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
 		System.out.println("server handler constructed");
 		this.server = server;
 		this.serverSocket = datagramSocket;
