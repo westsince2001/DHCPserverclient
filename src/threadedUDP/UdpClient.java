@@ -26,7 +26,7 @@ class UdpClient extends Node {
 	public void connectToServer() {
 		try {
 			System.out.println("client started");
-			DatagramSocket clientSocket = new DatagramSocket();
+			clientSocket = new DatagramSocket();
 
 			// Send DHCP_Discover
 			DHCPMessage msg = getDiscoverMsg();
