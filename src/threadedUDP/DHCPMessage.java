@@ -115,9 +115,11 @@ public class DHCPMessage {
 	 * @throws UnknownHostException 
 	 */
 	public byte[] encode() throws UnknownHostException {
-		byte[] byteMsg = new byte[512]; /*
+		byte[] byteMsg = new byte[244]; /*
 										 * TODO: lengte afhankelijk van lengte
 										 * van options
+										 * 
+										 * Voorlopig lengte options = 8 bytes (magic cookie (4) + message type (3) + end option (2))
 										 */
 		ByteBuffer buf = ByteBuffer.wrap(byteMsg);
 
@@ -136,7 +138,7 @@ public class DHCPMessage {
 		buf.put(getSname());
 		buf.put(getFile());
 		//buf.put(getOptions().encode());
-		buf.put(options);
+		buf.put(options); // TODO
 		
 		return byteMsg;
 
@@ -287,5 +289,9 @@ public class DHCPMessage {
 	public void setOptions(DHCPOptions options) {
 		this.options = options;
 	}*/
-
+	
+	// DEBUGGING
+	public void print(){
+		System.out.println("MessageType " + type);
+	}
 }
