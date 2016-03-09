@@ -38,11 +38,11 @@ public class tests {
 	
 	@Test
 	public void testOptions() throws UnknownHostException{
-		DHCPOptions options = new DHCPOptions();
-		System.out.println( new String( new byte[]{6} , StandardCharsets.UTF_8)); // TODO dit werkt dus al niet, dus onderstaande zeker niet :/
-		System.out.println( new String( new byte[]{(byte) MessageType.DHCPDISCOVER.getValue()} , StandardCharsets.UTF_8));
-		options.addOption(53,  new byte[]{(byte) MessageType.DHCPDISCOVER.getValue()});
-		System.out.println(options.encode());
+//		DHCPOptions options = new DHCPOptions();
+//		System.out.println( new String( new byte[]{6} , StandardCharsets.UTF_8)); // TODO dit werkt dus al niet, dus onderstaande zeker niet :/
+//		System.out.println( new String( new byte[]{(byte) MessageType.DHCPDISCOVER.getValue()} , StandardCharsets.UTF_8));
+//		options.addOption(53,  new byte[]{(byte) MessageType.DHCPDISCOVER.getValue()});
+//		System.out.println(options.encode());
 		
 	}
 

@@ -17,8 +17,7 @@ public enum MessageType {
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
-			// TODO Auto-generated method stub
-			return null;
+			return node.getOfferAnswer(msg);
 		}
 
 	},

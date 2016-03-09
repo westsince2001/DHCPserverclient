@@ -32,7 +32,7 @@ public enum Opcode {
 //	public static DHCPOpcode getByVal(int val){
 //		for(DHCPOpcode op : DHCPOpcode.values()){
 //			if(op.getValue() == val)
-//				return op;é
+//				return op;ï¿½
 //		}
 //		return null;
 //	}
