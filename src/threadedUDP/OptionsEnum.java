@@ -5,7 +5,7 @@ import java.util.HashMap;
 import DHCPEnum.Htype;
 
 public enum OptionsEnum {
-	
+	MessageType(53);
 	// TODO geen idee of we dit gaan gebruiken. Alle options in deze enum zetten is nogal overkill
 	
 	int value;
@@ -17,9 +17,9 @@ public enum OptionsEnum {
 		return value;
 	}
 	
-	private static HashMap<Integer, Htype> map = new HashMap<Integer,OptionsEnum>();
+	private static HashMap<Integer, OptionsEnum> map = new HashMap<Integer,OptionsEnum>();
     static {
-    	for(OptionsEnum optoin : OptionsEnum.values()){
+    	for(OptionsEnum option : OptionsEnum.values()){
             map.put(option.value, option);
         }
     }
