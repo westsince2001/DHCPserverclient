@@ -5,7 +5,12 @@ import java.util.HashMap;
 import DHCPEnum.Htype;
 
 public enum OptionsEnum {
-	MessageType(53);
+	MessageType(53),
+	RequestIP(50),
+	LeaseTime(51),
+	ServerID(54),
+	End(255);
+	
 	// TODO geen idee of we dit gaan gebruiken. Alle options in deze enum zetten is nogal overkill
 	
 	int value;

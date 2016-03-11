@@ -13,7 +13,7 @@ public class Handler implements Runnable {
 	DatagramPacket receivePacket;
 
 	public Handler(UdpServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
-		System.out.println("server handler constructed");
+		System.out.println("# server handler constructed");
 		this.server = server;
 		this.serverSocket = datagramSocket;
 		this.receivePacket = receivePacket;
@@ -21,18 +21,28 @@ public class Handler implements Runnable {
 	}
 
 	public void run() {
-		System.out.println("server handler run");
-		try {
-			
-			// Print received data
-			// String sentence = new String(receivePacket.getData());
-			// System.out.println("RECEIVED: " + sentence);
-			
+		System.out.println("##### Server handler run #####");
+		try {			
 			byte[] byteMsg = receivePacket.getData();
-			DHCPMessage msg = new DHCPMessage(byteMsg);
 			
-			DHCPMessage answer = msg.getType().getAnswer(msg, server);
-			sendMsg(answer);
+			try {
+				DHCPMessage msg = new DHCPMessage(byteMsg);
+				System.out.println("# server received message:");
+				msg.print();
+				DHCPMessage answer = msg.getType().getAnswer(msg, server);
+				if(answer != null){
+					System.out.println("# server generated answer");
+					answer.print();
+					sendMsg(answer);
+				}else{
+					System.out.println("WARNING: server could not answer received message!");
+				}
+				
+			} catch (UnknownMessageTypeException e) {
+				System.out.println("WARNING: received DHCP message without Type option (53)!");
+			}
+			
+			
 		}
 
 		catch (IOException e) {
@@ -41,40 +51,6 @@ public class Handler implements Runnable {
 			// connectie sluiten of voert finally clause nog uit in ServerUdp?
 		}
 	}
-
-//	/**
-//	 * Sends an offer as answer to the given msg which should be a DISOVER type
-//	 * message
-//	 * @throws IOException 
-//	 **/
-//	private void sendOffer(DHCPMessage msg) throws IOException {
-//		
-//		/* Aangezien alle soorten DHCP berichten (Discover, offer, ack...) ongeveer dezelfde structuur hebben
-//		 * moet dit nog op een andere manier gebeuren
-//		 * 
-//		 */
-//		
-//		Opcode op = Opcode.BOOTREPLY;
-//		Htype htype = Htype.ETHERNET;
-//		Hlen hlen = Hlen.INTERNET;
-//		Hops hops = Hops.WHATEVER; /* TODO: hops (geen idee wat dat doet/is) */
-//		int transactionID = msg.getTransactionID();
-//		int num_of_seconds = 0; /* TODO: overnemen uit msg ? */
-//		byte[] flags = new byte[0]; /* TODO: flags */
-//		InetAddress clientIP = InetAddress.getByName("localhost"); /* TODO */
-//		InetAddress serverIP = InetAddress.getByName("localhost"); /* TODO */
-//		InetAddress gatewayIP = InetAddress.getByName("localhost"); /* TODO */
-//		byte[] chaddr = msg.getChaddr();
-//		byte[] sname = new byte[0]; // TODO
-//		byte[] file = new byte[0]; // TODO
-//		MessageType type = MessageType.DHCPOFFER;
-//
-//		DHCPMessage answer = new DHCPMessage(op, htype, hlen, hops,
-//				transactionID, num_of_seconds, flags, clientIP, serverIP,
-//				gatewayIP, chaddr, sname, file, type);
-//
-//		sendMsg(answer);
-//	}
 
 	/**
 	 * Sends a given DHCPMessage
@@ -87,5 +63,6 @@ public class Handler implements Runnable {
 				sendData.length, receivePacket.getAddress(),
 				receivePacket.getPort());
 		serverSocket.send(sendPacket);
+		System.out.println("# server sent message");
 	}
 }

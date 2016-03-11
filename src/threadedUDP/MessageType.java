@@ -25,8 +25,7 @@ public enum MessageType {
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
-			// TODO Auto-generated method stub
-			return null;
+			return node.getRequestAnswer(msg);
 		}
 
 	
@@ -35,8 +34,7 @@ public enum MessageType {
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
-			// TODO Auto-generated method stub
-			return null;
+			return node.getAckAnswer(msg);
 		}
 
 	},
@@ -44,8 +42,7 @@ public enum MessageType {
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
-			// TODO Auto-generated method stub
-			return null;
+			return node.getNakAnswer(msg);
 		}
 
 		
@@ -54,8 +51,7 @@ public enum MessageType {
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
-			// TODO Auto-generated method stub
-			return null;
+			return node.getReleaseAnswer(msg);
 		}
 
 		

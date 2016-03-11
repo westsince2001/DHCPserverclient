@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import threadedUDP.DHCPOptions;
 import threadedUDP.MessageType;
+import threadedUDP.Utils;
 
 
 public class tests {
@@ -35,6 +36,19 @@ public class tests {
 	public void test() {
 		//fail("Not yet implemented");
 	}
+	
+	@Test
+	public void bytesToInt(){
+		int[] n = new int[]{5,255,23,-5,156,500};
+		
+		for(int i : n){
+			byte[] b = Utils.toBytes(i);	
+			int res = Utils.fromBytes(b);
+			assertEquals(i,res);
+		}
+	}
+	
+	
 	
 	@Test
 	public void testOptions() throws UnknownHostException{
