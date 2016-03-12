@@ -7,7 +7,9 @@ public class Experiment2 {
     // Get elapsed time in milliseconds
     long elapsedTimeMillis = System.currentTimeMillis() - start;
     // 
+    System.out.println(System.currentTimeMillis());
     float elapsedTimeSec = elapsedTimeMillis/1000F;
     System.out.println(elapsedTimeSec);
+    
   }
 }
