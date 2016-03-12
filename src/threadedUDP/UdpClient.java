@@ -68,50 +68,13 @@ class UdpClient extends Node {
 			sendReleaseMessage();
 			release();
 			
-			
+			// Unvalid renewing
+			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set unvalid IP
+			extendLeaseFor(1); // TODO: moet NAK krijgen!
 			
 			
 			
 			// RELEASE TESTEN
-
-			
-			/*// Check if NAK
-			answer = extendLeaseRequestMessage();
-			 answer.print();
-			 sendMsg(answer);
-			
-			 // Receive answer
-			 byte[] receiveData = new byte[576]; // DHCP message maximum 576 bytes
-			 DatagramPacket receivePacket = new DatagramPacket(receiveData,
-			 receiveData.length);
-			 System.out.println("client's waiting to receive something");
-			 clientSocket.receive(receivePacket);
-			 System.out.println("Client received something");
-			 byte[] byteMsg = receivePacket.getData();
-			 DHCPMessage msg = new DHCPMessage(byteMsg);
-			 msg.print(); // debugging purposes
-			 getAckAnswer(msg);*/
-			
-			
-			
-
-		// Release.. lijkt te werken maar niet zeker want hoeft geen antwoord te krijgen :/
-//			System.out.println("releasing");
-//			
-//			// Extend lease
-//			answer = getReleaseMsg(new DHCPMessage());
-//			answer.print();
-//			sendMsg(answer);
-//
-//			// Receive answer
-//			byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
-//			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-//			System.out.println("client's waiting to receive something");
-//			clientSocket.receive(receivePacket);
-//			System.out.println("Client received something");
-//			byte[] byteMsg = receivePacket.getData();
-//			msg = new DHCPMessage(byteMsg);
-//			msg.print(); // debugging purposes
 
 		} catch (Exception e) {
 			System.out.println("Error! The resources are released and the connection is now closing.");
