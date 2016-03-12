@@ -35,7 +35,7 @@ class UdpClient extends Node {
 		client.connectToServer();
 	}
 	
-	/*CONNECT TO SERVER */
+	/* CONNECT TO SERVER */
 
 	public void connectToServer() {
 		System.out.println("###########################");
@@ -74,9 +74,11 @@ class UdpClient extends Node {
 			extendUnvalidLeaseFor(3); // TODO: moet NAK krijgen!
 
 		} catch (Exception e) {
-			System.out.println("Error! The resources are released and the connection is now closing.");
-			closeConnection();
+			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
 			e.printStackTrace();
+		}finally{
+			System.out.println("##### RELEASING RESOURCES AND CLOSING CONNECTION #####");
+			closeConnection();
 		}
 	}
 	
@@ -93,8 +95,7 @@ class UdpClient extends Node {
 		
 		// Close client socket
 		if (getClientSocket() != null)
-			getClientSocket().close();
-					
+			getClientSocket().close();				
 	}
 	
 	public void extendValidLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
@@ -182,11 +183,15 @@ class UdpClient extends Node {
 	private void sendMsg(DHCPMessage msg) throws IOException {
 		// Message to bytes
 		byte[] sendData = msg.encode();
+		
+		// Make sending packet
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost"), // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
 				1234);
 		
 		// Send message
 		getClientSocket().send(sendPacket);
+		
+		// Set the previous sent message to the just sent message
 		setPreviousSentMessage(msg);
 	}
 	
@@ -306,7 +311,6 @@ class UdpClient extends Node {
 
 	// Request
 
-	// gecontroleerd fields
 	@Override
 	DHCPMessage getNewIPRequestMsg(DHCPMessage msg) throws UnknownHostException {
 		// ENKEL REQUEST VOOR NA DISCOVER

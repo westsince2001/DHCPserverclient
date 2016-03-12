@@ -8,49 +8,46 @@ import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 
 public class Handler implements Runnable {
-	UdpServer server;
-	DatagramSocket serverSocket;
-	DatagramPacket receivePacket;
-
+	
+	/* CONSTRUCTOR */
 	public Handler(UdpServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
-		System.out.println("# server handler constructed");
 		this.server = server;
 		this.serverSocket = datagramSocket;
 		this.receivePacket = receivePacket;
 		
 	}
 
+	/* RUN METHOD */
 	public void run() {
-		System.out.println("##### Server handler run #####");
-		try {			
-			byte[] byteMsg = receivePacket.getData();
+		System.out.println();
+		System.out.println("##### SERVING CLIENT IN THREAD ##### (handler)");
+		try {		
 			
-			try {
-				DHCPMessage msg = new DHCPMessage(byteMsg);
-				System.out.println("# server received message:");
-				msg.print();
-				DHCPMessage answer = msg.getType().getAnswer(msg, server);
-				if(answer != null){
-					System.out.println("# server generated answer");
-					answer.print();
-					sendMsg(answer);
-				}else{
-					System.out.println("WARNING: server could not answer received message!");
-				}
-				
-			} catch (UnknownMessageTypeException e) {
-				System.out.println("WARNING: received DHCP message without Type option (53)!");
-			}
+			// Decode received message
+			byte[] byteMsg = getReceivePacket().getData();
+			DHCPMessage receivedMessage = new DHCPMessage(byteMsg);
 			
+			// Print received message
+			System.out.println("o Server received " + receivedMessage.getType());
+			receivedMessage.print();
+			
+			// Answer message
+			DHCPMessage answer = receivedMessage.getType().getAnswer(receivedMessage, getServer());
+			sendMsg(answer); // answer == null --> caught in catch block!
+			
+			// Print
+			System.out.println("o Server sends " + answer.getType());
+			answer.print();
 			
 		}
-
-		catch (IOException e) {
-			System.out.println("IOException on sending" + e);
+		// Catch exception here and not in UdpServer --> other clients are still being served
+		catch (Exception e) {
+			System.out.println("WARNING: server could not answer received message!");
 			e.printStackTrace();
-			// connectie sluiten of voert finally clause nog uit in ServerUdp?
 		}
 	}
+	
+	/* SEND MESSAGE */
 
 	/**
 	 * Sends a given DHCPMessage
@@ -58,11 +55,34 @@ public class Handler implements Runnable {
 	 * @throws IOException
 	 * */
 	private void sendMsg(DHCPMessage msg) throws IOException {
+		// Message to bytes
 		byte[] sendData = msg.encode();
+		
+		// Make sending packet
 		DatagramPacket sendPacket = new DatagramPacket(sendData,
-				sendData.length, receivePacket.getAddress(),
-				receivePacket.getPort());
-		serverSocket.send(sendPacket);
-		System.out.println("# server sent message");
+				sendData.length, getReceivePacket().getAddress(),
+				getReceivePacket().getPort());
+		
+		// Send message
+		getServerSocket().send(sendPacket);
 	}
+	
+	/* VARIABLES */
+	final UdpServer server;
+	final DatagramSocket serverSocket;
+	final DatagramPacket receivePacket;
+
+	/* GETTERS */
+	public UdpServer getServer() {
+		return server;
+	}
+
+	public DatagramSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	public DatagramPacket getReceivePacket() {
+		return receivePacket;
+	}
+
 }

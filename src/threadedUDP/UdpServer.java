@@ -50,28 +50,58 @@ public class UdpServer extends Node {
 			System.out.println("###########################");
 			System.out.println();
 
+			// Listen for clients and serve them (in different threads).
 			while (true) {
 				// Receive data
-				byte[] receiveData = new byte[1024];
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				System.out.println("# server is listening");
-				serverSocket.receive(receivePacket);
-				System.out.println("# server received packet");
+				DatagramPacket receivePacket = receivePacket();
 				
-				// Serve client (in thread)
-				if (receivePacket != null) {
-					Handler h = new Handler(this, serverSocket, receivePacket);
-					Thread thread = new Thread(h);
-					thread.start(); // run method run in handler
-				}
+				// Serve client (in THREAD)
+				serveClient(receivePacket);
 			}
 		}
 		catch(IOException e){
-			System.out.println("IOException on receiving" + e);
+			System.out.println("Error! The serversocket is being deleted.");
+			e.printStackTrace();
 		} finally {
-			// Release resources on exception
-			System.out.println("exit server");
+			// Release resources
+			System.out.println("##### CLOSING CONNECTION #####");
 			exit(serverSocket);
+		}
+	}
+	
+	public DatagramSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	public void setServerSocket(DatagramSocket serverSocket) {
+		this.serverSocket = serverSocket;
+	}
+	
+	// Server listens until receives packet
+	public DatagramPacket receivePacket() throws IOException{
+		byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
+		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		
+		// print
+		System.out.println();
+		System.out.println("///// server is listening ///// (Server)");
+		
+		// Listening until receives packet
+		serverSocket.receive(receivePacket);
+		
+		// print
+		System.out.println();
+		System.out.println("///// server creates thread ///// (Server)");
+		
+		return receivePacket;
+	}
+	
+	// Serve client (in thread)
+	public void serveClient(DatagramPacket receivePacket){
+		if (receivePacket != null){
+			Handler h = new Handler(this, serverSocket, receivePacket);
+			Thread thread = new Thread(h);
+			thread.start(); // run method run in handler
 		}
 	}
 
