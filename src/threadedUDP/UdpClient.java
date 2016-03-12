@@ -8,6 +8,8 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Random;
 
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
+
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
@@ -19,9 +21,18 @@ class UdpClient extends Node {
 	private InetAddress currentClientIP;
 	private int currentTransactionID;
 	private byte[] serverID;
+	private byte[] macAddress = getMacAddressThisComputer();
 	
 	
 	
+	public byte[] getMacAddress() {
+		return macAddress;
+	}
+
+	public void setMacAddress(byte[] macAddress) {
+		this.macAddress = macAddress;
+	}
+
 	private Long startLeaseTime = null; // null pointer!!!!
 	private long leaseTime = 0;
 	
@@ -39,9 +50,6 @@ class UdpClient extends Node {
 	}
 
 	public float getSecondsElapsedSinceAck() {
-		System.out.println("StartLeaseTime" + startLeaseTime);
-		System.out.println("currentTimeMillis" + (long)System.currentTimeMillis());
-		System.out.println("difference" + ((long)System.currentTimeMillis() - startLeaseTime));
 		return (System.currentTimeMillis() - startLeaseTime)/1000F;
 	}
 
@@ -82,7 +90,14 @@ class UdpClient extends Node {
 	}
 
 	public void connectToServer() {
-		System.out.println("Client started");
+		System.out.println("###########################");
+		System.out.println("#                         #");
+		System.out.println("#   DHCP CLIENT STARTED   #");
+		System.out.println("#      Tuur Van Daele     #");
+		System.out.println("#      Thomas Verelst     #");
+		System.out.println("#                         #");
+		System.out.println("###########################");
+		System.out.println();
 		
 		// Create datagram socket
 		try {
@@ -165,15 +180,16 @@ class UdpClient extends Node {
 	}
 	
 	public void extendLeaseFor(int nbOfSeconds) throws IOException, InterruptedException{
-		System.out.println("##### EXTENDING LEASE FOR 15 SECONDS #####");
-		for(int i = 0;i < 15; i++){
+		System.out.println();
+		System.out.println("##### CLIENT IS EXTENDING LEASE FOR 15 SECONDS #####");
+		for(int i = 0;i < 1500; i++){
 			if (shouldRenew()){
 				 // Extend lease
 				 DHCPMessage sendMsg = extendLeaseRequestMessage();
 				 sendMsg(sendMsg);
 				 
 				 // Print extend lease message
-				 System.out.println("# Send renew request");
+				 System.out.println("o Client sends renew request after " + getSecondsElapsedSinceAck() + " seconds.");
 				 sendMsg.print();
 				
 				 // Receive answer
@@ -186,6 +202,7 @@ class UdpClient extends Node {
 				 // Print received message
 				 try {
 					 DHCPMessage answer = new DHCPMessage(byteMsg);
+					 System.out.println("o Client receives " + answer.getType());
 					 answer.print();
 					 getAckAnswer(answer); // TODO
 				} catch (UnknownMessageTypeException e) {
@@ -193,7 +210,7 @@ class UdpClient extends Node {
 				}	
 			}
 			else{
-				Thread.sleep(1000);
+				Thread.sleep(10);
 			}
 		
 			
@@ -202,6 +219,8 @@ class UdpClient extends Node {
 	}
 	
 	public void answerIncomingMessages(DatagramSocket clientSocket) throws IOException{
+		System.out.println();
+		System.out.println("##### CLIENT IS ANSWERING INCOMING MESSAGES #####");
 		while(true) {
 			// Receive message
 			byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
@@ -213,6 +232,7 @@ class UdpClient extends Node {
 			DHCPMessage answer;
 			try{
 				DHCPMessage msg = new DHCPMessage(byteMsg);
+				System.out.println("o Client receives " + msg.getType()); // TODO
 				msg.print();
 				
 				// Reply to msg
@@ -223,7 +243,7 @@ class UdpClient extends Node {
 			}
 			
 			if (answer != null) {
-				System.out.println("# client generated message");
+				System.out.println("o Client sends " + answer.getType()); // TODO
 				answer.print();
 				sendMsg(answer);
 			}
@@ -244,7 +264,8 @@ class UdpClient extends Node {
 		sendMsg(msg);
 		
 		// Printing
-		System.out.println("##### SEND DISCOVERY MESSAGE ######");
+		System.out.println();
+		System.out.println("##### CLIENT HAS JUST SENT DISCOVERY MESSAGE #####");
 		msg.print(); // print message
 		
 	}
@@ -340,25 +361,25 @@ class UdpClient extends Node {
 		Htype htype = Htype.ETHERNET;
 		Hlen hlen = Hlen.INTERNET;
 		byte hops = 0; // 0 voor request
-		System.out.println("current transaction ID" + getCurrentTransactionID());
 		int transactionID = getCurrentTransactionID();
 		short num_of_seconds = 0; /* TODO: NOG DOEN */
 		byte[] flags = UNICAST_FLAG;
-		System.out.println("getCurrentClientIP" + getCurrentClientIP());
-		
 		InetAddress clientIP = getCurrentClientIP();
 		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
-
+		
 		byte[] chaddr = getMacAddress();
 		byte[] sname = new byte[64]; // TODO:
 		byte[] file = new byte[128]; // TODO:
+	
+		
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(53, MessageType.DHCPREQUEST.getValue());
 		//options.addOption(50, getCurrentClientIP().getAddress()); // MAG NIET BIJ RENEWING, ENKEL BIJ SELECTING EN REBOOTING!!!!!!!!
 		//options.addOption(54, getServerID()); //mag alleen na SELECT!
 		options.addOption(255);
+		
 		
 		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);
 
@@ -413,10 +434,17 @@ class UdpClient extends Node {
 	// Release
 	
 	public void sendReleaseMessage() throws IOException{
-		System.out.println("release");
+		
+		// Create release message
 		DHCPMessage answer = getReleaseMsg(); // TODO: ip uitschakelen
-		answer.print();
+		
+		// Send release message
 		sendMsg(answer);
+		
+		// Print
+		System.out.println();
+		System.out.println("##### CLIENT HAS JUST RELEASED RESOURCES #####");
+		answer.print();
 	}
 
 	@Override
@@ -466,7 +494,7 @@ class UdpClient extends Node {
 	}
 
 	/* GET ADDRESSES */
-	public static byte[] getMacAddress() { // http://www.mkyong.com/java/how-to-get-mac-address-in-java/
+	public static byte[] getMacAddressThisComputer() { // http://www.mkyong.com/java/how-to-get-mac-address-in-java/
 		try {
 			String mac = null;
 			InetAddress ip = InetAddress.getLocalHost();
