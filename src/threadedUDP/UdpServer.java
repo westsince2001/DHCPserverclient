@@ -11,45 +11,47 @@ import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 
 public class UdpServer extends Node {
-	DatagramSocket serverSocket;
-	InetAddress[] pool = {InetAddress.getByName("1.1.1.1")}; // Tijdelijk om te testen, later wordt het ingeladen via een file
-	HashMap<InetAddress, byte[]> leasedIP; // HashMap houdt bij welke InetAdresses al uitgeleend zijn en aan welke client, wel efficient om te moeten zoeken welke client welk ip adres heeft... 
 	
-	int serverID;
+	/* CONSTRUCTOR */
 	
-	public int getServerID() {
-		return serverID;
-	}
-
-	public void setServerID(int serverID) {
-		this.serverID = serverID;
+	public UdpServer() throws UnknownHostException {
+		setServerSocket(null);
+		this.serverID = 456;
+		this.leasedIP = new HashMap<InetAddress, byte[]>();
+		this.pool = new InetAddress[]{InetAddress.getByName("1.1.1.1")};
 	}
 	
-	
-
-	public static void main(String[] args) throws Exception {
-		
-		UdpServer server = new UdpServer();
-		server.startServer();
+	/* MAIN METHOD */
+	public static void main(String[] args) {
+		try{
+			UdpServer server = new UdpServer();
+			server.startServer();
+		} catch(UnknownHostException e){
+			System.out.println("Error: cannot make new server");
+			e.getStackTrace();
+		}
 	}
 
-	public UdpServer() throws Exception {
-		serverSocket = new DatagramSocket(getPort());
-		setServerID(456);
-	}
-
+	/* START SERVER */
 	public void startServer() {
+		System.out.println("###########################");
+		System.out.println("#                         #");
+		System.out.println("#   DHCP SERVER STARTED   #");
+		System.out.println("#      Tuur Van Daele     #");
+		System.out.println("#      Thomas Verelst     #");
+		System.out.println("#                         #");
+		System.out.println("###########################");
+		System.out.println();
+		
+		// Create datagram socket
+		try {
+			setServerSocket(new DatagramSocket());
+		} catch (SocketException e1) {
+			System.out.println("Error! The datagram socket cannot be constructed!");
+			e1.printStackTrace();
+		}
 
 		try {
-			System.out.println("###########################");
-			System.out.println("#                         #");
-			System.out.println("#   DHCP SERVER STARTED   #");
-			System.out.println("#      Tuur Van Daele     #");
-			System.out.println("#      Thomas Verelst     #");
-			System.out.println("#                         #");
-			System.out.println("###########################");
-			System.out.println();
-
 			// Listen for clients and serve them (in different threads).
 			while (true) {
 				// Receive data
@@ -64,18 +66,11 @@ public class UdpServer extends Node {
 			e.printStackTrace();
 		} finally {
 			// Release resources
-			System.out.println("##### CLOSING CONNECTION #####");
+			System.out.println("///// SERVER RELEASES RESOURCES ///// (server)");
 			exit(serverSocket);
 		}
 	}
-	
-	public DatagramSocket getServerSocket() {
-		return serverSocket;
-	}
 
-	public void setServerSocket(DatagramSocket serverSocket) {
-		this.serverSocket = serverSocket;
-	}
 	
 	// Server listens until receives packet
 	public DatagramPacket receivePacket() throws IOException{
@@ -279,7 +274,41 @@ public class UdpServer extends Node {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	/* GETTERS AND SETTERS */
+	
+	
+	public DatagramSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	public void setServerSocket(DatagramSocket serverSocket) {
+		this.serverSocket = serverSocket;
+	}
+	
+	public InetAddress[] getPool() {
+		return pool;
+	}
 
 
+	public HashMap<InetAddress, byte[]> getLeasedIP() {
+		return leasedIP;
+	}
+
+	
+	public int getServerID() {
+		return serverID;
+	}
+	
+	
+	/* VARIABLES */
+
+	DatagramSocket serverSocket;
+
+	final HashMap<InetAddress, byte[]> leasedIP; // HashMap houdt bij welke InetAdresses al uitgeleend zijn en aan welke client, wel efficient om te moeten zoeken welke client welk ip adres heeft... 
+	
+	final int serverID;
+	
+	final InetAddress[] pool; // Tijdelijk om te testen, later wordt het ingeladen via een file
 
 }

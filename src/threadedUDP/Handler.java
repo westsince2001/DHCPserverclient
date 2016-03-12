@@ -20,7 +20,7 @@ public class Handler implements Runnable {
 	/* RUN METHOD */
 	public void run() {
 		System.out.println();
-		System.out.println("##### SERVING CLIENT IN THREAD ##### (handler)");
+		System.out.println("##### SERVER IS SERVING CLIENT IN THREAD ##### (handler)");
 		try {		
 			
 			// Decode received message
@@ -56,7 +56,7 @@ public class Handler implements Runnable {
 	 * */
 	private void sendMsg(DHCPMessage msg) throws IOException {
 		// Message to bytes
-		byte[] sendData = msg.encode();
+		byte[] sendData = msg.encode(); // TODO: geeft error na ack na release van client
 		
 		// Make sending packet
 		DatagramPacket sendPacket = new DatagramPacket(sendData,
