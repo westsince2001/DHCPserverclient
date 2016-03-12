@@ -27,8 +27,6 @@ class UdpClient extends Node {
 	}
 	
 
-
-
 	DatagramSocket clientSocket;
 	private InetAddress currentClientIP;
 	private static Random rand = new Random();
@@ -115,7 +113,7 @@ class UdpClient extends Node {
 		
 		// Create datagram socket
 		try {
-			clientSocket = new DatagramSocket();
+			setClientSocket(new DatagramSocket());
 		} catch (SocketException e1) {
 			System.out.println("Error! The datagram socket cannot be constructed!");
 			e1.printStackTrace();
@@ -126,7 +124,7 @@ class UdpClient extends Node {
 			sendDiscoveryMsg();
 			
 			// Answer and process Incoming messages
-			processIncomingMessages(clientSocket);
+			processAndAnswerIncomingMessages();
 			
 			// Extending lease for 15 seconds
 			extendLeaseFor(15);
@@ -134,6 +132,8 @@ class UdpClient extends Node {
 			// Release resources
 			sendReleaseMessage();
 			release();
+			
+			
 			
 			// RELEASE TESTEN
 
@@ -178,8 +178,15 @@ class UdpClient extends Node {
 //			msg.print(); // debugging purposes
 
 		} catch (Exception e) {
-			System.out.println("Error! The connection is now closing.");
-			clientSocket.close();
+			System.out.println("Error! The resources are released and the connection is now closing.");
+			if (getCurrentClientIP() != null){
+				try{
+					sendReleaseMessage();
+				} catch(Exception e2){};
+				release();
+			}
+			if (getClientSocket() != null)
+				getClientSocket().close();
 		}
 	}
 
@@ -200,16 +207,19 @@ class UdpClient extends Node {
 		for(int i = 0;i < 1500; i++){
 			// If the lease should be renewed (after 50% of lease) --> extend the lease
 			if (shouldRenew()){
-				 // Extend lease
-				 DHCPMessage sendMsg = extendLeaseRequestMessage();
-				 sendMsg(sendMsg);
-				 
-				 // Print sending message
-				 System.out.println("o Client sends renew request after " + getSecondsElapsedSinceAck() + " seconds.");
-				 sendMsg.print();
-				
-				 // Receive answer (with same transactionID)
-				 DHCPMessage receivedMessage = receiveMessage();
+				DHCPMessage receivedMessage;
+				do{
+					 // Extend lease
+					 DHCPMessage sendMsg = extendLeaseRequestMessage();
+					 sendMsg(sendMsg);
+					 
+					 // Print sending message
+					 System.out.println("o Client sends renew request after " + getSecondsElapsedSinceAck() + " seconds.");
+					 sendMsg.print();
+					
+					 // Receive answer (with same transactionID)
+					 receivedMessage = receiveMessage();
+				} while (receivedMessage == null); // If no message received --> resend renewing message
 				 
 				 // Print answer
 				 System.out.println("o Client receives " + receivedMessage.getType());
@@ -227,26 +237,39 @@ class UdpClient extends Node {
 		}
 	}
 	
+	public boolean hasPassedTenSecondsSince(long startTime){
+		long currentTime = System.currentTimeMillis();
+		return startTime + 100000 <= currentTime; // in milliseconds
+	}
+	
 	// Receive Message with transaction ID the same as the transaction ID of this client.
 	public DHCPMessage receiveMessage() throws IOException, UnknownMessageTypeException{
+		long startTime = System.currentTimeMillis();
 		DHCPMessage receivedMsg;
-		do{	
+		while(true){	
 			// Receive packet
 			byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 			DatagramPacket receivePacket = new DatagramPacket(receiveData,
 			receiveData.length);
-			clientSocket.receive(receivePacket);
+			getClientSocket().receive(receivePacket);
 			
 			// Unpack received packet
 			byte[] byteMsg = receivePacket.getData();
 			receivedMsg = new DHCPMessage(byteMsg);
 			
-			// If the transaction ID of the received message doesn't equal the transaction ID of this client, continue to receive.
-		} while(receivedMsg.getTransactionID() != getCurrentTransactionID());
-		return receivedMsg;
+			// If the transactionID of the received message equals the transaction ID of this client, return the received message
+			if (receivedMsg.getTransactionID() == getCurrentTransactionID()){
+				return receivedMsg;
+			}
+			
+			// If the client hasn't received any valid (same transaction ID) message in 10 seconds, return null
+			if (hasPassedTenSecondsSince(startTime)){
+				return null;
+			}
+		}
 	}
 	
-	public void processIncomingMessages(DatagramSocket clientSocket) throws IOException, UnknownMessageTypeException{
+	public void processAndAnswerIncomingMessages() throws IOException, UnknownMessageTypeException{
 		// Print
 		System.out.println();
 		System.out.println("##### CLIENT IS PROCESSING AND ANSWERING INCOMING MESSAGES #####");
@@ -256,6 +279,11 @@ class UdpClient extends Node {
 			// Receive message (with same transaction ID)
 			DHCPMessage receiveMessage = receiveMessage();
 			
+			// If no message received --> break
+			if (receiveMessage == null){
+				break;
+			}
+				
 			// Print received message
 			System.out.println("o Client receives " + receiveMessage.getType());
 			receiveMessage.print();
@@ -456,7 +484,7 @@ class UdpClient extends Node {
 	public void sendReleaseMessage() throws IOException{
 		
 		// Create release message
-		DHCPMessage releaseMessage = getReleaseMsg(); // TODO: ip uitschakelen
+		DHCPMessage releaseMessage = getReleaseMsg(); 
 		
 		// Send release message
 		sendMsg(releaseMessage);
@@ -468,10 +496,11 @@ class UdpClient extends Node {
 	}
 	
 	void release(){
+		// Delete client IP and server ID 
 		setCurrentClientIP(null);
 		setServerID(null);
 		
-		// Reset start time ack
+		// Reset seconds elapsed since ack and lease time
 		resetSecondsElapsedSinceAck();
 		setLeaseTime(0);
 	}
@@ -516,10 +545,13 @@ class UdpClient extends Node {
 	/* SEND MESSAGE */
 	
 	private void sendMsg(DHCPMessage msg) throws IOException {
+		// Message to bytes
 		byte[] sendData = msg.encode();
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost"), // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
 				1234);
-		clientSocket.send(sendPacket);
+		
+		// Send message
+		getClientSocket().send(sendPacket);
 	}
 
 	/* GET ADDRESSES */
