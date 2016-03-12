@@ -81,21 +81,26 @@ class UdpClient extends Node {
 	public UdpClient() {
 	}
 
-	public void connectToServer() throws InterruptedException {
+	public void connectToServer() {
+		System.out.println("Client started");
+		
+		// Create datagram socket
 		try {
-			System.out.println("Client started");
-			
-			// Create datagram socket
 			clientSocket = new DatagramSocket();
-
+		} catch (SocketException e1) {
+			System.out.println("Error! The datagram socket cannot be constructed!");
+			e1.printStackTrace();
+		}
+		
+		try {
 			// Send discovery message
 			sendDiscoveryMsg();
 			
 			// Answer Incoming messages
-			answerIncomingMessages(clientSocket);
+			answerIncomingMessages(clientSocket); // TODO
 			
-			// Extend lease during 20 seconds
-			extendLeaseFor(20);
+			// Extending lease for 15 seconds
+			extendLeaseFor(15);
 			
 			// Release resources
 			sendReleaseMessage();
@@ -109,7 +114,7 @@ class UdpClient extends Node {
 			 sendMsg(answer);
 			
 			 // Receive answer
-			 byte[] receiveData = new byte[1024];
+			 byte[] receiveData = new byte[576]; // DHCP message maximum 576 bytes
 			 DatagramPacket receivePacket = new DatagramPacket(receiveData,
 			 receiveData.length);
 			 System.out.println("client's waiting to receive something");
@@ -133,7 +138,7 @@ class UdpClient extends Node {
 //			sendMsg(answer);
 //
 //			// Receive answer
-//			byte[] receiveData = new byte[1024];
+//			byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 //			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 //			System.out.println("client's waiting to receive something");
 //			clientSocket.receive(receivePacket);
@@ -142,10 +147,9 @@ class UdpClient extends Node {
 //			msg = new DHCPMessage(byteMsg);
 //			msg.print(); // debugging purposes
 
-		} catch (IOException e) {
-			System.out.println(e);
-			// Moet hier clientsocket nog sluiten? Maar object is in try
-			// gemaakt..
+		} catch (Exception e) {
+			System.out.println("Error! The connection is now closing.");
+			clientSocket.close();
 		}
 	}
 
@@ -161,34 +165,35 @@ class UdpClient extends Node {
 	}
 	
 	public void extendLeaseFor(int nbOfSeconds) throws IOException, InterruptedException{
-		// TODO nbOfSeconds
-		for(int i = 0;i <2; i++){
+		System.out.println("##### EXTENDING LEASE FOR 15 SECONDS #####");
+		for(int i = 0;i < 15; i++){
 			if (shouldRenew()){
-				System.out.println("seconds elapsed since ack" + getSecondsElapsedSinceAck());
 				 // Extend lease
-				 DHCPMessage answer = extendLeaseRequestMessage();
-				 answer.print();
-				 sendMsg(answer);
+				 DHCPMessage sendMsg = extendLeaseRequestMessage();
+				 sendMsg(sendMsg);
+				 
+				 // Print extend lease message
+				 System.out.println("# Send renew request");
+				 sendMsg.print();
 				
 				 // Receive answer
-				 byte[] receiveData = new byte[1024];
+				 byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 				 DatagramPacket receivePacket = new DatagramPacket(receiveData,
 				 receiveData.length);
-				 System.out.println("client's waiting to receive something");
 				 clientSocket.receive(receivePacket);
-				 System.out.println("Client received something");
 				 byte[] byteMsg = receivePacket.getData();
+				 
+				 // Print received message
 				 try {
-					 DHCPMessage msg = new DHCPMessage(byteMsg);
-					 msg.print(); // debugging purposes
-					 getAckAnswer(msg);
+					 DHCPMessage answer = new DHCPMessage(byteMsg);
+					 answer.print();
+					 getAckAnswer(answer); // TODO
 				} catch (UnknownMessageTypeException e) {
 					// TODO: handle exception
-				}
-				
-		}
+				}	
+			}
 			else{
-				Thread.sleep(7000); // voor sewes als release test
+				Thread.sleep(1000);
 			}
 		
 			
@@ -198,12 +203,10 @@ class UdpClient extends Node {
 	
 	public void answerIncomingMessages(DatagramSocket clientSocket) throws IOException{
 		while(true) {
-			System.out.println("# client is listening");
-			// Receive answer
-			byte[] receiveData = new byte[1024];
+			// Receive message
+			byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 			clientSocket.receive(receivePacket);
-			System.out.println("# client received message");
 			byte[] byteMsg = receivePacket.getData();
 			
 			
@@ -234,10 +237,16 @@ class UdpClient extends Node {
 	// Discovery message
 
 	void sendDiscoveryMsg() throws IOException{
-		System.out.println("##### SEND DISCOVERY MESSAGE ######");
+		// Create discovery message
 		DHCPMessage msg = getDiscoverMsg();
-		msg.print(); // print message
+		
+		// Send discovery message
 		sendMsg(msg);
+		
+		// Printing
+		System.out.println("##### SEND DISCOVERY MESSAGE ######");
+		msg.print(); // print message
+		
 	}
 	
 	
@@ -454,7 +463,6 @@ class UdpClient extends Node {
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost"), // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
 				1234);
 		clientSocket.send(sendPacket);
-		System.out.println("# client sent message");
 	}
 
 	/* GET ADDRESSES */
