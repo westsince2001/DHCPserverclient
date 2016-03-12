@@ -12,6 +12,13 @@ public enum MessageType {
 		public DHCPMessage getAnswer(DHCPMessage msg, Node obj) throws UnknownHostException{
 			return obj.getDiscoverAnswer(msg);
 		}
+
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	},
 	DHCPOFFER(2){
 		@Override
@@ -20,12 +27,23 @@ public enum MessageType {
 			return node.getOfferAnswer(msg);
 		}
 
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			// do nothing
+		}
+
 	},
 	DHCPREQUEST(3){
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
 			return node.getRequestAnswer(msg);
+		}
+
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			// TODO Auto-generated method stub
+			
 		}
 
 	
@@ -37,12 +55,23 @@ public enum MessageType {
 			return node.getAckAnswer(msg);
 		}
 
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			 node.processAck(msg);
+		}
+
 	},
 	DHCPNAK(6){
 		@Override
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
 			return node.getNakAnswer(msg);
+		}
+
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		
@@ -52,6 +81,12 @@ public enum MessageType {
 		public DHCPMessage getAnswer(DHCPMessage msg, Node node)
 				throws UnknownHostException {
 			return node.getReleaseAnswer(msg);
+		}
+
+		@Override
+		public void process(DHCPMessage msg, Node node) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		
@@ -70,6 +105,8 @@ public enum MessageType {
 	
 	//public abstract DHCPMessage generateMsg(DHCPMessage msg) throws UnknownHostException;
 	public abstract DHCPMessage getAnswer(DHCPMessage msg, Node node) throws UnknownHostException;
+	
+	public abstract void process(DHCPMessage msg, Node node);
 	
 	private static HashMap<Integer, MessageType> map = new HashMap<Integer,MessageType>();
     static {

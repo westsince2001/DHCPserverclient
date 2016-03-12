@@ -23,6 +23,7 @@ public abstract class Node {
 	//Acknowledge
 	abstract DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException;
 	abstract DHCPMessage getAckAnswer(DHCPMessage msg);
+	abstract void processAck(DHCPMessage msg);
 	
 	// Not Acknowledge
 	abstract DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException;
