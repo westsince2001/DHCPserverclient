@@ -21,6 +21,8 @@ public class DHCPOptions {
 		decode(byteOptions);
 	}
 	
+	// ADD OPTION
+	
 	public void addOption(Options code, int value) {
 		addOption(code.getValue(), value);
 	}
@@ -29,37 +31,40 @@ public class DHCPOptions {
 		options.put(code, data);
 	}
 
-	public void addOption(byte code){
-		options.put(code, null);
-	}
-	
-	public void addOption(int code){
-		addOption((byte) code);
-	}
-
 	public void addOption(int code, byte[] data) {
 		options.put((byte) code, data);
-	}
-	
-	public void addOption(int code, byte data ) {
-		addOption(code, new byte[]{data});
 	}
 	
 	public void addOption(int code, int data ) {
 		addOption(code, Utils.toBytes(data));
 	}
 	
-	public byte[] getOption(int code) {
-		return getOption((byte) code);
+	public void addOption(byte code){
+		addOption(code, null);
 	}
 	
+	public void addOption(int code){
+		assert(code <= 255 && code >= 0);
+		addOption((byte) code);
+	}
+	
+	// GET OPTION
 	public byte[] getOption(byte code) {
 		return options.get(code);
 	}
 	
+	public byte[] getOption(int code) {
+		assert(code <= 255 && code >= 0);
+		return getOption((byte) code);
+	}
+	
+	
+	
 	public byte[] getOption(Options option) {
 		return getOption(option.getValue());
 	}
+	
+	// CHECKERS
 	
 	public boolean isSet(Options option){
 		return getOption(option) != null;
@@ -118,9 +123,6 @@ public class DHCPOptions {
 		for (Map.Entry<Byte, byte[]> entry : options.entrySet()) {
 			int code = entry.getKey() & 0xFF;
 			Options codeItem = Options.getByVal(code);
-			if(codeItem != null){
-				
-			}
 			
 			byte[] data = entry.getValue();
 			if( code == 0 || code == 255){
