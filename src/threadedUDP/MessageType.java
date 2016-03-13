@@ -7,6 +7,8 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Random;
 
+import Exceptions.UnknownMessageTypeException;
+
 public enum MessageType {
 	DHCPDISCOVER(1){		
 		@Override
@@ -16,7 +18,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// do nothing
+			node.processDiscover(msg);
 		}
 		
 	},
@@ -42,7 +44,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// Do nothing
+			node.processRequest(msg);
 			
 		}
 
@@ -90,6 +92,9 @@ public enum MessageType {
 		
 	};
 	
+	public abstract DHCPMessage getAnswer(DHCPMessage msg, Node node) throws UnknownHostException;
+	public abstract void process(DHCPMessage msg, Node node) throws IOException, UnknownMessageTypeException;
+	
 	
 	int value;
 	
@@ -99,12 +104,7 @@ public enum MessageType {
 	
 	public int getValue() {
 		return value;
-	}
-	
-	//public abstract DHCPMessage generateMsg(DHCPMessage msg) throws UnknownHostException;
-	public abstract DHCPMessage getAnswer(DHCPMessage msg, Node node) throws UnknownHostException;
-	
-	public abstract void process(DHCPMessage msg, Node node) throws IOException, UnknownMessageTypeException;
+	}	
 	
 	private static HashMap<Integer, MessageType> map = new HashMap<Integer,MessageType>();
     static {

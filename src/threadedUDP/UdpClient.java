@@ -8,9 +8,13 @@ import java.util.Properties;
 import java.util.Random;
 
 
+
+
+
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
+import Exceptions.UnknownMessageTypeException;
 
 class UdpClient extends Node {
 	
@@ -21,7 +25,7 @@ class UdpClient extends Node {
 		setCurrentClientIP(null);
 		currentTransactionID = rand.nextInt((int) Math.pow(2, 32)); // Random transaction id
 		setServerID(null);
-		macAddress = getMacAddressThisComputer();
+		macAddress = MACadress.getMacAddressThisComputer();
 		setLeaseTime(0);
 		resetSecondsElapsedSinceAck();
 		setPreviousSentMessage(null);
@@ -279,7 +283,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress();
+		byte[] chaddr = getMacAddress().getBytes();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 
@@ -336,7 +340,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress();
+		byte[] chaddr = getMacAddress().getBytes();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 		DHCPOptions options = new DHCPOptions();
@@ -363,7 +367,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress();
+		byte[] chaddr = getMacAddress().getBytes();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 	
@@ -470,7 +474,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); 
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 
-		byte[] chaddr = getMacAddress();
+		byte[] chaddr = getMacAddress().getBytes();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 		DHCPOptions options = new DHCPOptions();
@@ -487,35 +491,7 @@ class UdpClient extends Node {
 	@Override
 	DHCPMessage getReleaseAnswer(DHCPMessage msg) {
 		return null;
-	}
-
-	/* GET ADDRESSES */
-	public static byte[] getMacAddressThisComputer() {
-		try {
-			InetAddress ip = InetAddress.getLocalHost();
-
-			Enumeration e = NetworkInterface.getNetworkInterfaces();
-
-			while (e.hasMoreElements()) {
-				NetworkInterface n = (NetworkInterface) e.nextElement();
-				Enumeration<InetAddress> ee = n.getInetAddresses();
-				while (ee.hasMoreElements()) {
-					InetAddress i = (InetAddress) ee.nextElement();
-					if (!i.isLoopbackAddress() && !i.isLinkLocalAddress() && i.isSiteLocalAddress()) {
-						ip = i;
-					}
-				}
-			}
-
-			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-			byte[] mac_byte = network.getHardwareAddress();
-			return Arrays.copyOfRange(mac_byte, 0, 16); // add zeros to MAC address
-		} catch (Exception e) {
-			return null;
-		}
-
-	}
-	
+	}	
 	
 	/* VARIABLES */
 
@@ -524,7 +500,7 @@ class UdpClient extends Node {
 	private static Random rand = new Random();
 	private int currentTransactionID;
 	private byte[] serverID;
-	private byte[] macAddress;
+	private MACadress macAddress;
 	private DHCPMessage previousSentMessage;
 	
 	
@@ -538,11 +514,11 @@ class UdpClient extends Node {
 		this.clientSocket = clientSocket;
 	}
 	
-	public byte[] getMacAddress() {
+	public MACadress getMacAddress() {
 		return macAddress;
 	}
 
-	public void setMacAddress(byte[] macAddress) {
+	public void setMacAddress(MACadress macAddress) {
 		this.macAddress = macAddress;
 	}
 
@@ -596,6 +572,18 @@ class UdpClient extends Node {
 
 	public void setPreviousSentMessage(DHCPMessage previousSentMessage) {
 		this.previousSentMessage = previousSentMessage;
+	}
+
+	@Override
+	void processDiscover(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	void processRequest(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

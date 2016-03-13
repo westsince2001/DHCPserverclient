@@ -19,6 +19,8 @@ import sun.net.InetAddressCachePolicy;
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
+import DHCPEnum.Options;
+import Exceptions.UnknownMessageTypeException;
 
 public class DHCPMessage {
 	
@@ -280,6 +282,10 @@ public class DHCPMessage {
 
 	public DHCPOptions getOptions() {
 		return options;
+	}
+	
+	public byte[] getOption(Options opt){
+		return getOptions().getOption(opt);
 	}
 
 	public void setOptions(DHCPOptions options) {

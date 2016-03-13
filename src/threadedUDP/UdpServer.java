@@ -2,6 +2,7 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
@@ -9,6 +10,7 @@ import java.util.Random;
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
+import DHCPEnum.Options;
 
 public class UdpServer extends Node {
 	
@@ -16,12 +18,15 @@ public class UdpServer extends Node {
 	
 	public UdpServer() throws UnknownHostException {
 		setServerSocket(null);
-		this.serverID = 456;
-		this.leasedIP = new HashMap<InetAddress, byte[]>();
-		this.pool = new InetAddress[]{InetAddress.getByName("1.1.1.1")};
+		
+		this.serverID = 456; // TODO eventueel random
+		
+		getLeases().addNewIP(InetAddress.getByName("1.1.1.1"));
+		getLeases().addNewIP(InetAddress.getByName("2.2.2.2"));
 	}
 	
 	/* MAIN METHOD */
+	
 	public static void main(String[] args) {
 		try{
 			UdpServer server = new UdpServer();
@@ -33,6 +38,7 @@ public class UdpServer extends Node {
 	}
 
 	/* START SERVER */
+	
 	public void startServer() {
 		System.out.println("###########################");
 		System.out.println("#                         #");
@@ -137,23 +143,32 @@ public class UdpServer extends Node {
 		return getOfferMsg(msg);
 	}
 	
+	@Override
+	void processDiscover(DHCPMessage msg) {
+		
+	}
+	
 	// Offer
 	
 	@Override
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
+
+		InetAddress offeredIP = getNextAvailableIP(); 
+		System.out.println("- Offered IP: "+ offeredIP);		
+		
 		Opcode op = Opcode.BOOTREPLY;
 		int transactionID = msg.getTransactionID();
 		byte[] flags = BROADCAST_FLAG;
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
-		InetAddress yourClientIP = InetAddress.getByName("99.99.99.99");
-		InetAddress serverIP = InetAddress.getByName("99.99.99.98");
+		InetAddress yourClientIP = offeredIP;
+		InetAddress serverIP = getServerIP();
 		
 		byte[] chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(OptionsEnum.MessageType, MessageType.DHCPOFFER.getValue());
-		options.addOption(OptionsEnum.ServerID, getServerID());
-		options.addOption(OptionsEnum.LeaseTime, 10);
+		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPOFFER.getValue());
+		options.addOption(Options.SERVER_ID, getServerID());
+		options.addOption(Options.LEASE_TIME, 10);
 		options.addOption(255);
 		
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
@@ -168,7 +183,7 @@ public class UdpServer extends Node {
 	@Override
 	void processOffer(DHCPMessage msg){
 		//TODO pas pool aan
-		// Als argument krijgt deze methode de OFFER message dat de server nu gaat sturen (zie handler)
+		// Als argument krijgt deze methode de OFFER message dat de server nu gaat sturen (zie handler)		
 	}
 	
 	// Request
@@ -189,39 +204,102 @@ public class UdpServer extends Node {
 	@Override
 	DHCPMessage getRequestAnswer(DHCPMessage msg) throws UnknownHostException {
 		
-		// Fields not correct --> NAK
-		if(msg.getOpcode() != Opcode.BOOTREQUEST)
-		 	return getNakMsg(msg);
-		if(msg.htype != Htype.ETHERNET)
-			return getNakMsg(msg);
-		if(!msg.getYourClientIP().equals(InetAddress.getByName("0.0.0.0")))
-			return getNakMsg(msg);
-		if(!msg.getServerIP().equals( InetAddress.getByName("0.0.0.0")))
-			return getNakMsg(msg);
-		if(!msg.getGatewayIP().equals(InetAddress.getByName("0.0.0.0")))
-			return getNakMsg(msg);
-		
-		// NEW IP LEASE
-		if(msg.getOptions().getOption(50) != null // Requested IP TODO check of gelijk aan offered adress!!!!!!!
-			&& msg.getOptions().getOption(54) != null // server identifier set
-			&& Utils.fromBytes(msg.getOptions().getOption(54)) == this.getServerID() // server identifier same as this server ID
-			&& msg.getClientIP().equals(InetAddress.getByName("0.0.0.0")) // Client IP adress set
-				){
+		if(isValidIPrequest(msg)){
+			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
+			
+			System.out.println("Leased IP"+requestedIP);
+			System.out.println(Utils.toHexString(msg.getChaddr()));
+			
+			getLeases().leaseIP(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), msg.getChaddr());
+			
 			return getAckMsg(msg);
 		}
+		
+		if(isValidIPextend(msg)){
+			InetAddress requestedIP = msg.getClientIP();
 			
-		// EXTEND IP LEASE
-		/// TODO Nakijken of client nu dit IP address en nog niet vervallen
-		if(msg.getOptions().getOption(50) == null  // Requested IP not set
-			&& msg.getOptions().getOption(54) == null // server identifier not set
-			&& !msg.getClientIP().equals(InetAddress.getByName("0.0.0.0")) // Client IP adress set
-				){
+			System.out.println("Renewed IP"+requestedIP);
+			System.out.println(Utils.toHexString(msg.getChaddr()));
+			
+		//	getLeases().put(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), new Leaser(msg.getChaddr(), 0, 0));
+		//	System.out.println(leasesToString());
+		//	printLeases();
+			
 			return getAckMsg(msg);
 		}
 		
 		// OTHERWISE
 		return getNakMsg(msg);
 	}
+		
+public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
+		// NEW IP LEASE
+	
+		// Check fields
+		
+		if(msg.getOpcode() != Opcode.BOOTREQUEST)
+		 	return false;
+		if(msg.htype != Htype.ETHERNET)
+			return false;
+		if(!msg.getYourClientIP().equals(InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(!msg.getServerIP().equals( InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(!msg.getGatewayIP().equals(InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(!msg.getClientIP().equals(InetAddress.getByName("0.0.0.0"))) // For an IP request, the client IP must be empty!
+			return false;
+		
+		
+		// Check options
+		
+		if(!msg.getOptions().isSet(Options.REQUESTED_IP)) // requested ip set TODO check of gelijk aan offered adress!
+			return false;
+		if(!msg.getOptions().isSet(Options.SERVER_ID)) // server identifier set
+			return false;
+		if(Utils.fromBytes(msg.getOption(Options.SERVER_ID)) != this.getServerID()) // server identifier is this server
+			return false;
+		
+		return true;
+	}
+	
+	public boolean isValidIPextend(DHCPMessage msg) throws UnknownHostException{
+		// EXTEND IP LEASE
+		
+		// Check fields
+		
+		if(msg.getOpcode() != Opcode.BOOTREQUEST)
+		 	return false;
+		if(msg.htype != Htype.ETHERNET)
+			return false;
+		if(!msg.getYourClientIP().equals(InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(!msg.getServerIP().equals( InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(!msg.getGatewayIP().equals(InetAddress.getByName("0.0.0.0")))
+			return false;
+		if(msg.getClientIP().equals(InetAddress.getByName("0.0.0.0"))) // For an IP extend, the client IP must be set!
+			return false;
+		
+		é
+		// Check options
+		
+		if(msg.getOptions().isSet(Options.REQUESTED_IP)) // requested ip may not be set
+			return false;
+		if(msg.getOptions().isSet(Options.SERVER_ID)) // server identifier may not be set
+			return false;
+		
+		return true;
+	}
+
+
+
+	@Override
+	void processRequest(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	
 	// Acknowledge
 
@@ -329,7 +407,6 @@ public class UdpServer extends Node {
 	
 	/* GETTERS AND SETTERS */
 	
-	
 	public DatagramSocket getServerSocket() {
 		return serverSocket;
 	}
@@ -337,16 +414,6 @@ public class UdpServer extends Node {
 	public void setServerSocket(DatagramSocket serverSocket) {
 		this.serverSocket = serverSocket;
 	}
-	
-	public InetAddress[] getPool() {
-		return pool;
-	}
-
-
-	public HashMap<InetAddress, byte[]> getLeasedIP() {
-		return leasedIP;
-	}
-
 	
 	public int getServerID() {
 		return serverID;
@@ -356,15 +423,21 @@ public class UdpServer extends Node {
 		return InetAddress.getByName("localhost");
 	}
 	
+	/* LEASING */
+	
+	Leases leases = new Leases();
 	
 	/* VARIABLES */
 
+	public Leases getLeases() {
+		return leases;
+	}
+
+	public void setLeases(Leases leases) {
+		this.leases = leases;
+	}
+
 	DatagramSocket serverSocket;
-
-	final HashMap<InetAddress, byte[]> leasedIP; // HashMap houdt bij welke InetAdresses al uitgeleend zijn en aan welke client, wel efficient om te moeten zoeken welke client welk ip adres heeft... 
+	final int serverID;	
 	
-	final int serverID;
-	
-	final InetAddress[] pool; // Tijdelijk om te testen, later wordt het ingeladen via een file
-
 }

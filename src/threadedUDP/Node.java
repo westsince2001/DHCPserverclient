@@ -3,6 +3,8 @@ package threadedUDP;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import Exceptions.UnknownMessageTypeException;
+
 public abstract class Node {
 	public static final byte[] BROADCAST_FLAG = new byte[]{(byte) 128,0};
 	public static final byte[] UNICAST_FLAG = new byte[]{0,0};
@@ -10,6 +12,7 @@ public abstract class Node {
 	// Discover
 	abstract DHCPMessage getDiscoverMsg() throws UnknownHostException;
 	abstract DHCPMessage getDiscoverAnswer(DHCPMessage msg) throws UnknownHostException;
+	abstract void processDiscover(DHCPMessage msg);
 	
 	// Offer
 	abstract DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException;
@@ -20,6 +23,7 @@ public abstract class Node {
 	abstract DHCPMessage getNewIPRequestMsg(DHCPMessage msg) throws UnknownHostException;
 	abstract DHCPMessage extendLeaseRequestMessage() throws UnknownHostException;
 	abstract DHCPMessage getRequestAnswer(DHCPMessage msg) throws UnknownHostException;
+	abstract void processRequest(DHCPMessage msg);
 	
 	//Acknowledge
 	abstract DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException;

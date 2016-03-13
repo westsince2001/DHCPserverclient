@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import DHCPEnum.Options;
+
 public class DHCPOptions {
 	Map<Byte, byte[]> options = new LinkedHashMap<>();
 
@@ -19,7 +21,7 @@ public class DHCPOptions {
 		decode(byteOptions);
 	}
 	
-	public void addOption(OptionsEnum code, int value) {
+	public void addOption(Options code, int value) {
 		addOption(code.getValue(), value);
 	}
 
@@ -55,8 +57,12 @@ public class DHCPOptions {
 		return options.get(code);
 	}
 	
-	public byte[] getOption(OptionsEnum option) {
+	public byte[] getOption(Options option) {
 		return getOption(option.getValue());
+	}
+	
+	public boolean isSet(Options option){
+		return getOption(option) != null;
 	}
 
 	/**
@@ -111,7 +117,7 @@ public class DHCPOptions {
 		String str = "";
 		for (Map.Entry<Byte, byte[]> entry : options.entrySet()) {
 			int code = entry.getKey() & 0xFF;
-			OptionsEnum codeItem = OptionsEnum.getByVal(code);
+			Options codeItem = Options.getByVal(code);
 			if(codeItem != null){
 				
 			}
