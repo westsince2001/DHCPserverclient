@@ -66,7 +66,7 @@ class UdpClient extends Node {
 			
 			// Release resources
 			sendReleaseMessage();
-			release();
+			processRelease(null);
 			
 			// Unvalid renewing
 			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set unvalid IP
@@ -88,7 +88,7 @@ class UdpClient extends Node {
 	private void closeConnection(){
 		// Release resources if possible
 		if (getCurrentClientIP() != null){
-			release();
+			processRelease(null);
 			try{
 				sendReleaseMessage();
 			} catch(Exception e2){};
@@ -227,6 +227,7 @@ class UdpClient extends Node {
 		// If after 10 seconds nothing received--> resend message and listen again
 		catch(SocketTimeoutException e){
 			System.out.println("o Client is resending previous message");
+			getPreviousSentMessage().print();
 			sendMsg(getPreviousSentMessage()); // Resend previous message
 			return receivePacket(receivePacket); // Listen again
 		}
@@ -308,6 +309,12 @@ class UdpClient extends Node {
 	DHCPMessage getOfferAnswer(DHCPMessage msg) throws UnknownHostException {
 		DHCPMessage answer = getNewIPRequestMsg(msg);
 		return answer;
+	}
+	
+	@Override
+	void processOffer(DHCPMessage msg){
+		System.out.println("Client cannot process offer");
+		// do nothing
 	}
 
 	// Request
@@ -426,7 +433,8 @@ class UdpClient extends Node {
 		releaseMessage.print();
 	}
 	
-	void release(){
+	@Override
+	void processRelease(DHCPMessage message){
 		// Delete client IP and server ID 
 		setCurrentClientIP(null);
 		setServerID(null);

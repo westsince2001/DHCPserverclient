@@ -14,6 +14,7 @@ public abstract class Node {
 	// Offer
 	abstract DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException;
 	abstract DHCPMessage getOfferAnswer(DHCPMessage msg) throws UnknownHostException;
+	abstract void processOffer(DHCPMessage msg);
 	
 	// Request
 	abstract DHCPMessage getNewIPRequestMsg(DHCPMessage msg) throws UnknownHostException;
@@ -32,6 +33,7 @@ public abstract class Node {
 	// Release
 	abstract DHCPMessage getReleaseMsg() throws UnknownHostException;
 	abstract DHCPMessage getReleaseAnswer(DHCPMessage msg);
+	abstract void processRelease(DHCPMessage msg);
 	
 	//qabstract void sendMsg(DHCPMessage msg) throws IOException; Mag niet hier want anders sendMsg zit in handler en niet in ServerUDP! + 't is beter als sendMsg private is
 }

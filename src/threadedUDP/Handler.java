@@ -30,9 +30,15 @@ public class Handler implements Runnable {
 			System.out.println("o Server received " + receivedMessage.getType());
 			receivedMessage.print();
 			
+			// Process received message
+			receivedMessage.getType().process(receivedMessage, server); // bv. release
+			
 			// Answer message
 			DHCPMessage answer = receivedMessage.getType().getAnswer(receivedMessage, getServer());
 			sendMsg(answer); // answer == null --> caught in catch block!
+			
+			// Process answer
+			answer.getType().process(answer, server);
 			
 			// Print
 			System.out.println("o Server sends " + answer.getType());

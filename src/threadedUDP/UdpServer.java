@@ -124,9 +124,11 @@ public class UdpServer extends Node {
 
 	/* TRANSACTIONS */
 	
+	// Discovery
+	
 	@Override
 	DHCPMessage getDiscoverMsg() throws UnknownHostException {
-		// TODO Auto-generated method stub
+		System.out.println("Server should send to DHCP DISCOVER!");
 		return null;
 	}
 
@@ -134,10 +136,11 @@ public class UdpServer extends Node {
 	DHCPMessage getDiscoverAnswer(DHCPMessage msg) throws UnknownHostException {
 		return getOfferMsg(msg);
 	}
-
+	
+	// Offer
+	
 	@Override
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
-		
 		Opcode op = Opcode.BOOTREPLY;
 		int transactionID = msg.getTransactionID();
 		byte[] flags = BROADCAST_FLAG;
@@ -161,6 +164,14 @@ public class UdpServer extends Node {
 		System.out.println("Server should not reply to DHCP OFFER!");
 		return null;
 	}
+	
+	@Override
+	void processOffer(DHCPMessage msg){
+		//TODO pas pool aan
+		// Als argument krijgt deze methode de OFFER message dat de server nu gaat sturen (zie handler)
+	}
+	
+	// Request
 
 	@Override
 	DHCPMessage getNewIPRequestMsg(DHCPMessage msg) throws UnknownHostException {
@@ -177,7 +188,8 @@ public class UdpServer extends Node {
 
 	@Override
 	DHCPMessage getRequestAnswer(DHCPMessage msg) throws UnknownHostException {
-		System.out.println("get Request answer");
+		
+		// Fields not correct --> NAK
 		if(msg.getOpcode() != Opcode.BOOTREQUEST)
 		 	return getNakMsg(msg);
 		if(msg.htype != Htype.ETHERNET)
@@ -188,28 +200,30 @@ public class UdpServer extends Node {
 			return getNakMsg(msg);
 		if(!msg.getGatewayIP().equals(InetAddress.getByName("0.0.0.0")))
 			return getNakMsg(msg);
-		if(msg.getOptions().getOption(50) != null // Requested IP TODO check of gelijk aan offered adress!
+		
+		// NEW IP LEASE
+		if(msg.getOptions().getOption(50) != null // Requested IP TODO check of gelijk aan offered adress!!!!!!!
 			&& msg.getOptions().getOption(54) != null // server identifier set
 			&& Utils.fromBytes(msg.getOptions().getOption(54)) == this.getServerID() // server identifier same as this server ID
 			&& msg.getClientIP().equals(InetAddress.getByName("0.0.0.0")) // Client IP adress set
 				){
-			// new IP lease
-			
 			return getAckMsg(msg);
 		}
 			
-			
+		// EXTEND IP LEASE
+		/// TODO Nakijken of client nu dit IP address en nog niet vervallen
 		if(msg.getOptions().getOption(50) == null  // Requested IP not set
 			&& msg.getOptions().getOption(54) == null // server identifier not set
 			&& !msg.getClientIP().equals(InetAddress.getByName("0.0.0.0")) // Client IP adress set
 				){
-			// extend IP lease
-			
 			return getAckMsg(msg);
 		}
 		
+		// OTHERWISE
 		return getNakMsg(msg);
 	}
+	
+	// Acknowledge
 
 	@Override
 	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
@@ -238,24 +252,25 @@ public class UdpServer extends Node {
 		
 		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);		
 	}
-
-	private InetAddress getServerIP() throws UnknownHostException {
-		// TODO Auto-generated method stub
-		return InetAddress.getByName("localhost");
-	}
-
+	
 	@Override
 	DHCPMessage getAckAnswer(DHCPMessage msg) {
 		System.out.println("Server should not answer ACK message!");
 		return null;
 	}
+	
+	@Override
+	void processAck(DHCPMessage msg) {
+		// TODO Aanpassen in pool
+		// Als argument krijgt ACK Message dat nu gaat zenden!!
+		
+	}
 
+	// Not acknowledge
+	
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
 		System.out.println("-Generating Nak. Not implemented yet, will return NULL");
-		
-		
-		
 		return null;
 	}
 
@@ -264,6 +279,8 @@ public class UdpServer extends Node {
 		System.out.println("Server should not answer ACK message!");
 		return null;
 	}
+	
+	// RELEASE
 
 	@Override
 	DHCPMessage getReleaseMsg() throws UnknownHostException {
@@ -276,12 +293,13 @@ public class UdpServer extends Node {
 		System.out.println("Server got release from client");		
 		return null;
 	}
-
+	
 	@Override
-	void processAck(DHCPMessage msg) {
-		// TODO Auto-generated method stub
-		
+	void processRelease (DHCPMessage msg){
+		// TODO: verwijderen uit pool
+		// Argument: message dat ONTVANGT van client
 	}
+
 	
 	/* GETTERS AND SETTERS */
 	
@@ -306,6 +324,10 @@ public class UdpServer extends Node {
 	
 	public int getServerID() {
 		return serverID;
+	}
+	
+	private InetAddress getServerIP() throws UnknownHostException {
+		return InetAddress.getByName("localhost");
 	}
 	
 	

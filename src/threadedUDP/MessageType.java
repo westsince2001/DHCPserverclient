@@ -15,8 +15,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// TODO Auto-generated method stub
-			
+			// do nothing
 		}
 		
 	},
@@ -29,7 +28,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// do nothing
+			node.processOffer(msg);
 		}
 
 	},
@@ -42,7 +41,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// TODO Auto-generated method stub
+			// Do nothing
 			
 		}
 
@@ -70,8 +69,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// TODO Auto-generated method stub
-			
+			// do nothing
 		}
 
 		
@@ -85,8 +83,7 @@ public enum MessageType {
 
 		@Override
 		public void process(DHCPMessage msg, Node node) {
-			// TODO Auto-generated method stub
-			
+			node.processRelease(msg);
 		}
 
 		
