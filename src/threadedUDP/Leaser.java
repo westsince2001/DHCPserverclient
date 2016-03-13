@@ -3,14 +3,16 @@ package threadedUDP;
 import java.net.InetAddress;
 
 public class Leaser {
-	Leaser( MACadress chaddr, int startTime, int leaseTime){
-		
+	Leaser( MACaddress chaddr, int startTime, int leaseTime){
+		setChaddr(chaddr);
+		setStartTime(startTime);
+		setLeaseTime(leaseTime);
 	}
 	
 	
-	int startTime;
-	int leaseTime;
-	MACadress chaddr;
+	private int startTime;
+	private int leaseTime;
+	private MACaddress chaddr;
 	//InetAddress ip;
 //	
 //	public InetAddress getIp() {
@@ -31,10 +33,10 @@ public class Leaser {
 	public void setLeaseTime(int leaseTime) {
 		this.leaseTime = leaseTime;
 	}
-	public MACadress getChaddr() {
+	public MACaddress getChaddr() {
 		return chaddr;
 	}
-	public void setChaddr(MACadress chaddr) {
+	public void setChaddr(MACaddress chaddr) {
 		this.chaddr = chaddr;
 	}
 	

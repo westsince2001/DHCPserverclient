@@ -2,11 +2,12 @@ package threadedUDP;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.Arrays;
 import java.util.Enumeration;
 
-public class MACadress {
+public class MACaddress {
 	
-	public MACadress(byte[] mac) {
+	public MACaddress(byte[] mac) {
 		setMac(mac);
 	}
 	
@@ -17,7 +18,7 @@ public class MACadress {
 	}
 
 	public void setMac(byte[] mac) {
-		this.mac = mac;
+		this.mac =Arrays.copyOfRange(mac, 0, 16); // be sure it's always 16 bytes
 	}
 	
 	@Override
@@ -25,9 +26,13 @@ public class MACadress {
 		return Utils.toHexString(toBytes());
 	}
 	
+	public boolean equals(MACaddress m){
+		return Arrays.equals(m.toBytes(), this.toBytes());
+	}
+	
 	
 	/* GET ADDRESSES */
-	public static MACadress getMacAddressThisComputer() {
+	public static MACaddress getMacAddressThisComputer() {
 		try {
 			InetAddress ip = InetAddress.getLocalHost();
 
@@ -46,7 +51,7 @@ public class MACadress {
 
 			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
 			byte[] mac_byte = network.getHardwareAddress();
-			return new MACadress(mac_byte);
+			return new MACaddress(mac_byte);
 		} catch (Exception e) {
 			return null;
 		}

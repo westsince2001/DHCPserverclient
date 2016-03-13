@@ -10,12 +10,37 @@ public class Leases {
 		leases.put(ip, null);
 	}
 	
-	void leaseIP(InetAddress ip, MACadress chaddr){
+	void leaseIP(InetAddress ip, MACaddress chaddr){
+		//int startTime = System.currentTimeMillis();
+		
+		
 		leases.put(ip, new Leaser(chaddr, 0, 0)); // TODO timing
+	}
+	
+	void extendLease(InetAddress ip){ 
+		// TODO
+		System.out.println("extending lease not implemented yet");
 	}
 	
 	void removeLease(InetAddress ip){
 		leases.put(ip, null); 
+	}	
+	
+	public Leaser getLeaser(InetAddress ip){
+		return leases.get(ip);
+	}
+	
+	public boolean isLeased(InetAddress ip){ // TODO checken of dit ook werkt als ip niet in leases voorkomt!
+		return getLeaser(ip) != null;
+	}
+	
+	public boolean isLeasedBy(InetAddress ip, MACaddress chaddr){
+		if(!isLeased(ip))
+			return false;
+		Leaser leaser = getLeaser(ip);
+		if(!leaser.getChaddr().equals(chaddr))
+			return false;
+		return true;
 	}
 	
 	public HashMap<InetAddress, Leaser> getLeases() {
@@ -37,11 +62,11 @@ public class Leases {
 	
 	@Override
 	public String toString(){
-		String str = "";
+		String str = "Leases : ";
 		for(InetAddress ip : getLeases().keySet()){
 			Leaser leaser = getLeases().get(ip);
 			if( leaser != null){
-				str += "| "+ip.getHostAddress()+" - MAC:"+" - StartTime: "+leaser.getStartTime()+" ";
+				str += "| "+ip.getHostAddress()+" - MAC:"+ leaser.getChaddr().toString() + " - StartTime: "+leaser.getStartTime()+" ";
 			}
 		}
 		return str;
@@ -49,5 +74,15 @@ public class Leases {
 	
 	public void print(){
 		System.out.println(toString());
+	}
+
+	public InetAddress getIPbyMAC(MACaddress chaddr) {
+		for(InetAddress ip : getLeases().keySet()){
+			Leaser leaser = getLeases().get(ip);
+			if( leaser != null && leaser.getChaddr().equals(chaddr)){
+				return ip;
+			}
+		}
+		return null;
 	}
 }

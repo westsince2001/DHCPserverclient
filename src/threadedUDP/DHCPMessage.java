@@ -26,7 +26,7 @@ public class DHCPMessage {
 	
 	/** Creates a new DHCPMesssage with given parameters **/
 	public DHCPMessage(Opcode op, Htype htype, Hlen hlen, byte hops, int transactionID, short num_of_seconds, byte[] flags, InetAddress clientIP,
-		InetAddress yourClientIP, InetAddress serverIP, InetAddress gatewayIP, MACadress chaddr, byte[] sname, byte[] file, DHCPOptions options) {
+		InetAddress yourClientIP, InetAddress serverIP, InetAddress gatewayIP, MACaddress chaddr, byte[] sname, byte[] file, DHCPOptions options) {
 		setOpcode(op);
 		setHtype(htype);
 		setHlen(hlen);
@@ -44,7 +44,7 @@ public class DHCPMessage {
 		setOptions(options);
 	}
 	
-	public DHCPMessage(Opcode op, int transactionID, byte[] flags, InetAddress clientIP, InetAddress yourClientIP, InetAddress serverIP, MACadress chaddr, DHCPOptions options) throws UnknownHostException {
+	public DHCPMessage(Opcode op, int transactionID, byte[] flags, InetAddress clientIP, InetAddress yourClientIP, InetAddress serverIP, MACaddress chaddr, DHCPOptions options) throws UnknownHostException {
 		this(op, Htype.ETHERNET, Hlen.INTERNET, (byte) 0, transactionID, (short) 0, flags, clientIP, yourClientIP, serverIP, InetAddress.getByName("0.0.0.0"), chaddr, new byte[0], new byte[0], options);
 	}
 
@@ -74,7 +74,7 @@ public class DHCPMessage {
 		setYourClientIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 16, 20)));
 		setServerIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 20, 24)));
 		setGatewayIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 24, 28)));
-		setChaddr(new MACadress(Utils.getByteRange(byteMsg, 28, 44)));
+		setChaddr(new MACaddress(Utils.getByteRange(byteMsg, 28, 44)));
 		setSname(Utils.getByteRange(byteMsg, 44, 108));
 		setFile(Utils.getByteRange(byteMsg, 108, 236));
 		DHCPOptions newOptions = new DHCPOptions(Utils.getByteRange(byteMsg, 236, byteMsg.length));
@@ -156,7 +156,7 @@ public class DHCPMessage {
 	InetAddress yourClientIP;
 	InetAddress serverIP;
 	InetAddress gatewayIP;
-	MACadress chaddr;
+	MACaddress chaddr;
 	byte[] sname;
 	byte[] file;
 	MessageType type;
@@ -250,11 +250,11 @@ public class DHCPMessage {
 		this.gatewayIP = gatewayIP;
 	}
 
-	public MACadress getChaddr() {
+	public MACaddress getChaddr() {
 		return chaddr;
 	}
 
-	public void setChaddr(MACadress chaddr) {
+	public void setChaddr(MACaddress chaddr) {
 		this.chaddr = chaddr;
 	}
 

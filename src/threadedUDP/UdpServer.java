@@ -2,12 +2,7 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.Random;
 
-import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 import DHCPEnum.Options;
@@ -154,6 +149,10 @@ public class UdpServer extends Node {
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
 
 		InetAddress offeredIP = getLeases().getNextAvailableIP(); 
+		if(offeredIP == null){
+			System.out.println("# WARNING: no more available IP's!");
+			return null;
+		}
 		System.out.println("- Offered IP: "+ offeredIP);		
 		
 		Opcode op = Opcode.BOOTREPLY;
@@ -163,7 +162,7 @@ public class UdpServer extends Node {
 		InetAddress yourClientIP = offeredIP;
 		InetAddress serverIP = getServerIP();
 		
-		MACadress chaddr = msg.getChaddr();
+		MACaddress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPOFFER.getValue());
@@ -206,11 +205,10 @@ public class UdpServer extends Node {
 		
 		if(isValidIPrequest(msg)){
 			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
-			
-			System.out.println("Leased IP"+requestedIP);
-			//System.out.println(Utils.toHexString(msg.getChaddr()));
-			
-			getLeases().leaseIP(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), msg.getChaddr());
+	
+			System.out.println("Lease IP"+requestedIP);
+			getLeases().leaseIP(requestedIP, msg.getChaddr());
+			getLeases().print();
 			
 			return getAckMsg(msg);
 		}
@@ -218,12 +216,9 @@ public class UdpServer extends Node {
 		if(isValidIPextend(msg)){
 			InetAddress requestedIP = msg.getClientIP();
 			
-			System.out.println("Renewed IP"+requestedIP);
-			//System.out.println(Utils.toHexString(msg.getChaddr()));
-			
-		//	getLeases().put(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), new Leaser(msg.getChaddr(), 0, 0));
-		//	System.out.println(leasesToString());
-		//	printLeases();
+			System.out.println("Renew IP"+requestedIP);
+			getLeases().extendLease(requestedIP);
+			getLeases().print();
 			
 			return getAckMsg(msg);
 		}
@@ -260,6 +255,11 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		if(Utils.fromBytes(msg.getOption(Options.SERVER_ID)) != this.getServerID()) // server identifier is this server
 			return false;
 		
+		// Check if IP not leased yet
+		InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
+		if(getLeases().isLeased(requestedIP))
+			return false;
+		
 		return true;
 	}
 	
@@ -274,7 +274,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 			return false;
 		if(!msg.getYourClientIP().equals(InetAddress.getByName("0.0.0.0")))
 			return false;
-		if(!msg.getServerIP().equals( InetAddress.getByName("0.0.0.0")))
+		if(!msg.getServerIP().equals(InetAddress.getByName("0.0.0.0")))
 			return false;
 		if(!msg.getGatewayIP().equals(InetAddress.getByName("0.0.0.0")))
 			return false;
@@ -287,6 +287,11 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		if(msg.getOptions().isSet(Options.REQUESTED_IP)) // requested ip may not be set
 			return false;
 		if(msg.getOptions().isSet(Options.SERVER_ID)) // server identifier may not be set
+			return false;
+		
+		// Check if IP is already leased to this client
+		InetAddress requestedIP = msg.getClientIP();
+		if(!getLeases().isLeasedBy(requestedIP, msg.getChaddr()))
 			return false;
 		
 		return true;
@@ -306,20 +311,15 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	@Override
 	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
 		Opcode op = Opcode.BOOTREPLY;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0; 
 		int transactionID = msg.getTransactionID();
-		short num_of_seconds = 0; 
 		byte[] flags = UNICAST_FLAG;
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
-		InetAddress yourClientIP = InetAddress.getByName("99.99.99.99");
-		InetAddress serverIP = getServerIP();
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
+		InetAddress yourClientIP = getLeases().getIPbyMAC(msg.getChaddr());
+		assert(yourClientIP != null);
 		
-		MACadress chaddr = msg.getChaddr();
-		byte[] sname = new byte[64]; 
-		byte[] file = new byte[128];
+		InetAddress serverIP = getServerIP();
+		
+		MACaddress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(53, MessageType.DHCPACK.getValue());
@@ -327,7 +327,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		options.addOption(51, 10);
 		options.addOption(255);
 		
-		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);		
+		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		
 	}
 	
 	@Override
@@ -350,20 +350,13 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		// TODO fields voor NAK!!!! Best maandag doen!
 		
 		Opcode op = Opcode.BOOTREPLY;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0; 
 		int transactionID = msg.getTransactionID();
-		short num_of_seconds = 0; 
 		byte[] flags = UNICAST_FLAG;
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress yourClientIP = InetAddress.getByName("99.99.99.99");
 		InetAddress serverIP = getServerIP();
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		MACadress chaddr = msg.getChaddr();
-		byte[] sname = new byte[64]; 
-		byte[] file = new byte[128];
+		MACaddress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(53, MessageType.DHCPNAK.getValue());
@@ -371,7 +364,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		options.addOption(51, 10);
 		options.addOption(255);
 		
-		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);		
+		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		
 	}
 
 	@Override
