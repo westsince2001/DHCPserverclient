@@ -7,18 +7,14 @@ import java.util.Enumeration;
 
 public class MACaddress {
 	
-	public MACaddress(byte[] mac) {
-		setMac(mac);
+	public MACaddress(byte[] chaddr) {
+		this.chaddr = Arrays.copyOfRange(chaddr, 0, 16); // be sure it's always 16 bytes
 	}
 	
-	byte[] mac;
+	private final byte[] chaddr;
 	
 	public byte[] toBytes() {
-		return mac;
-	}
-
-	public void setMac(byte[] mac) {
-		this.mac =Arrays.copyOfRange(mac, 0, 16); // be sure it's always 16 bytes
+		return chaddr;
 	}
 	
 	@Override
@@ -29,7 +25,6 @@ public class MACaddress {
 	public boolean equals(MACaddress m){
 		return Arrays.equals(m.toBytes(), this.toBytes());
 	}
-	
 	
 	/* GET ADDRESSES */
 	public static MACaddress getMacAddressThisComputer() {
