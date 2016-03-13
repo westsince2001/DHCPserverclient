@@ -71,17 +71,19 @@ class UdpClient extends Node {
 			// Unvalid renewing
 			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set unvalid IP
 			extendUnvalidLeaseFor(3); // TODO: moet NAK krijgen!
-
+			
 		} catch (Exception e) {
 			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
 			e.printStackTrace();
+			
+		// Release resources and closing datagram socket after execution
 		}finally{
-			System.out.println("##### RELEASING RESOURCES AND CLOSING CONNECTION #####");
+			System.out.println("##### RELEASING RESOURCES AND CLOSING SOCKET #####");
 			closeConnection();
 		}
 	}
 	
-	// Helper methods for connectToServer()
+	/* Helper methods for connectToServer() */
 	
 	private void closeConnection(){
 		// Release resources if possible

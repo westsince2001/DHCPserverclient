@@ -57,7 +57,6 @@ public class UdpServer extends Node {
 				// Receive data
 				DatagramPacket receivePacket = receivePacket();
 				
-				System.out.println("receives something");
 				// Serve client (in THREAD)
 				serveClient(receivePacket);
 			}
@@ -65,13 +64,15 @@ public class UdpServer extends Node {
 		catch(IOException e){
 			System.out.println("Error! The serversocket is being deleted.");
 			e.printStackTrace();
+			
+		// Release resources after execution
 		} finally {
-			// Release resources
 			System.out.println("///// SERVER RELEASES RESOURCES ///// (server)");
 			exit(serverSocket);
 		}
 	}
 
+	/* HELPER METHODS FOR startServer() */
 	
 	// Server listens until receives packet
 	public DatagramPacket receivePacket() throws IOException{
@@ -92,6 +93,13 @@ public class UdpServer extends Node {
 		return receivePacket;
 	}
 	
+	// Close socket
+	public void exit(DatagramSocket serverSocket) {
+		if (serverSocket != null) {
+			serverSocket.close();
+		}
+	}
+	
 	// Serve client (in thread)
 	public void serveClient(DatagramPacket receivePacket){
 		if (receivePacket != null){
@@ -100,6 +108,8 @@ public class UdpServer extends Node {
 			thread.start(); // run method run in handler
 		}
 	}
+	
+	/* READ FROM TXT FILE */
 
 	private static int getPort() throws IOException {
 		return 1234;
@@ -111,12 +121,9 @@ public class UdpServer extends Node {
 //		return result;
 	}
 
-	public void exit(DatagramSocket serverSocket) {
-		if (serverSocket != null) {
-			serverSocket.close();
-		}
-	}
 
+	/* TRANSACTIONS */
+	
 	@Override
 	DHCPMessage getDiscoverMsg() throws UnknownHostException {
 		// TODO Auto-generated method stub
