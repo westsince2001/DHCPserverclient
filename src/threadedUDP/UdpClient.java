@@ -187,7 +187,7 @@ class UdpClient extends Node {
 		
 		// Make sending packet
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost"), // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
-				1234);
+				1234); // TODO getPort()
 		
 		// Send message
 		getClientSocket().send(sendPacket);
