@@ -14,7 +14,6 @@ public class Handler implements Runnable {
 		this.server = server;
 		this.serverSocket = datagramSocket;
 		this.receivePacket = receivePacket;
-		
 	}
 
 	/* RUN METHOD */

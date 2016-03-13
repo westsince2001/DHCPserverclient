@@ -45,10 +45,10 @@ public class UdpServer extends Node {
 		
 		// Create datagram socket
 		try {
-			setServerSocket(new DatagramSocket());
-		} catch (SocketException e1) {
+			setServerSocket(new DatagramSocket(getPort()));
+		} catch (Exception e) {
 			System.out.println("Error! The datagram socket cannot be constructed!");
-			e1.printStackTrace();
+			e.printStackTrace();
 		}
 
 		try {
@@ -57,6 +57,7 @@ public class UdpServer extends Node {
 				// Receive data
 				DatagramPacket receivePacket = receivePacket();
 				
+				System.out.println("receives something");
 				// Serve client (in THREAD)
 				serveClient(receivePacket);
 			}
