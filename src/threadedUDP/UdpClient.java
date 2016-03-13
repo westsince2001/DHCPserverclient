@@ -78,6 +78,7 @@ class UdpClient extends Node {
 			
 		// Release resources and closing datagram socket after execution
 		}finally{
+			System.out.println();
 			System.out.println("##### RELEASING RESOURCES AND CLOSING SOCKET #####");
 			closeConnection();
 		}
