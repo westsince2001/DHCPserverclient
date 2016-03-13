@@ -26,7 +26,7 @@ public class DHCPMessage {
 	
 	/** Creates a new DHCPMesssage with given parameters **/
 	public DHCPMessage(Opcode op, Htype htype, Hlen hlen, byte hops, int transactionID, short num_of_seconds, byte[] flags, InetAddress clientIP,
-		InetAddress yourClientIP, InetAddress serverIP, InetAddress gatewayIP, byte[] chaddr, byte[] sname, byte[] file, DHCPOptions options) {
+		InetAddress yourClientIP, InetAddress serverIP, InetAddress gatewayIP, MACadress chaddr, byte[] sname, byte[] file, DHCPOptions options) {
 		setOpcode(op);
 		setHtype(htype);
 		setHlen(hlen);
@@ -44,8 +44,8 @@ public class DHCPMessage {
 		setOptions(options);
 	}
 	
-	public DHCPMessage(Opcode op, int transactionID, byte[] flags, InetAddress clientIP, InetAddress yourClientIP, InetAddress serverIP, byte[] chaddr, DHCPOptions options) throws UnknownHostException {
-		this(op, Htype.ETHERNET, Hlen.INTERNET, (byte) 0, transactionID, (short) 0, flags, clientIP, yourClientIP, serverIP, InetAddress.getByName("0.0.0.0"), new byte[0], new byte[0], new byte[0], options);
+	public DHCPMessage(Opcode op, int transactionID, byte[] flags, InetAddress clientIP, InetAddress yourClientIP, InetAddress serverIP, MACadress chaddr, DHCPOptions options) throws UnknownHostException {
+		this(op, Htype.ETHERNET, Hlen.INTERNET, (byte) 0, transactionID, (short) 0, flags, clientIP, yourClientIP, serverIP, InetAddress.getByName("0.0.0.0"), chaddr, new byte[0], new byte[0], options);
 	}
 
 	/** Creates empty DHCPMessage **/
@@ -74,7 +74,7 @@ public class DHCPMessage {
 		setYourClientIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 16, 20)));
 		setServerIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 20, 24)));
 		setGatewayIP(InetAddress.getByAddress(Utils.getByteRange(byteMsg, 24, 28)));
-		setChaddr(Utils.getByteRange(byteMsg, 28, 44));
+		setChaddr(new MACadress(Utils.getByteRange(byteMsg, 28, 44)));
 		setSname(Utils.getByteRange(byteMsg, 44, 108));
 		setFile(Utils.getByteRange(byteMsg, 108, 236));
 		DHCPOptions newOptions = new DHCPOptions(Utils.getByteRange(byteMsg, 236, byteMsg.length));
@@ -129,7 +129,7 @@ public class DHCPMessage {
 		buf.put(getGatewayIP().getAddress());
 		if (debugEncodingLength)
 			System.out.println("gatewayIP " + buf.position());
-		buf.put(Arrays.copyOfRange(getChaddr(), 0, 16));
+		buf.put(Arrays.copyOfRange(getChaddr().toBytes(), 0, 16));
 		if (debugEncodingLength)
 			System.out.println("MAC " + buf.position());
 		buf.put(Arrays.copyOfRange(getSname(),0, 64));
@@ -156,7 +156,7 @@ public class DHCPMessage {
 	InetAddress yourClientIP;
 	InetAddress serverIP;
 	InetAddress gatewayIP;
-	byte[] chaddr;
+	MACadress chaddr;
 	byte[] sname;
 	byte[] file;
 	MessageType type;
@@ -250,11 +250,11 @@ public class DHCPMessage {
 		this.gatewayIP = gatewayIP;
 	}
 
-	public byte[] getChaddr() {
+	public MACadress getChaddr() {
 		return chaddr;
 	}
 
-	public void setChaddr(byte[] chaddr) {
+	public void setChaddr(MACadress chaddr) {
 		this.chaddr = chaddr;
 	}
 
@@ -305,7 +305,7 @@ public class DHCPMessage {
 		System.out.print("| your Client IP: " + getYourClientIP());
 		System.out.print("| server IP: " + getServerIP());
 		//System.out.print("| gateway IP: " + getGatewayIP());
-		System.out.print("| Client Hardware Adresss: " + Utils.toHexString(getChaddr()));
+		System.out.print("| Client Hardware Adresss: " + (getChaddr().toString()));
 		//System.out.print("| Server name: " + Utils.toHexString(getSname()));
 		//System.out.print("| File: " + Utils.toHexString(getFile()));
 		System.out.print("| Options: " + options.toString()); // TODO

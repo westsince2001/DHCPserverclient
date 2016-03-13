@@ -2,7 +2,6 @@ package threadedUDP;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.util.Arrays;
 import java.util.Enumeration;
 
 public class MACadress {
@@ -13,12 +12,17 @@ public class MACadress {
 	
 	byte[] mac;
 	
-	public byte[] getBytes() {
+	public byte[] toBytes() {
 		return mac;
 	}
 
 	public void setMac(byte[] mac) {
 		this.mac = mac;
+	}
+	
+	@Override
+	public String toString(){
+		return Utils.toHexString(toBytes());
 	}
 	
 	

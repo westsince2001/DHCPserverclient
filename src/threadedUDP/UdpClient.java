@@ -283,7 +283,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress().getBytes();
+		MACadress chaddr = getMacAddress();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 
@@ -340,7 +340,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress().getBytes();
+		MACadress chaddr = getMacAddress();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 		DHCPOptions options = new DHCPOptions();
@@ -367,7 +367,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = getMacAddress().getBytes();
+		MACadress chaddr = getMacAddress();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 	
@@ -474,7 +474,7 @@ class UdpClient extends Node {
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); 
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 
-		byte[] chaddr = getMacAddress().getBytes();
+		MACadress chaddr = getMacAddress();
 		byte[] sname = new byte[64];
 		byte[] file = new byte[128];
 		DHCPOptions options = new DHCPOptions();

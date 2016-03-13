@@ -153,7 +153,7 @@ public class UdpServer extends Node {
 	@Override
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
 
-		InetAddress offeredIP = getNextAvailableIP(); 
+		InetAddress offeredIP = getLeases().getNextAvailableIP(); 
 		System.out.println("- Offered IP: "+ offeredIP);		
 		
 		Opcode op = Opcode.BOOTREPLY;
@@ -163,7 +163,7 @@ public class UdpServer extends Node {
 		InetAddress yourClientIP = offeredIP;
 		InetAddress serverIP = getServerIP();
 		
-		byte[] chaddr = msg.getChaddr();
+		MACadress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPOFFER.getValue());
@@ -208,7 +208,7 @@ public class UdpServer extends Node {
 			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
 			
 			System.out.println("Leased IP"+requestedIP);
-			System.out.println(Utils.toHexString(msg.getChaddr()));
+			//System.out.println(Utils.toHexString(msg.getChaddr()));
 			
 			getLeases().leaseIP(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), msg.getChaddr());
 			
@@ -219,7 +219,7 @@ public class UdpServer extends Node {
 			InetAddress requestedIP = msg.getClientIP();
 			
 			System.out.println("Renewed IP"+requestedIP);
-			System.out.println(Utils.toHexString(msg.getChaddr()));
+			//System.out.println(Utils.toHexString(msg.getChaddr()));
 			
 		//	getLeases().put(InetAddress.getByAddress(msg.getOptions().getOption(Options.REQUESTED_IP)), new Leaser(msg.getChaddr(), 0, 0));
 		//	System.out.println(leasesToString());
@@ -281,7 +281,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		if(msg.getClientIP().equals(InetAddress.getByName("0.0.0.0"))) // For an IP extend, the client IP must be set!
 			return false;
 		
-		é
+
 		// Check options
 		
 		if(msg.getOptions().isSet(Options.REQUESTED_IP)) // requested ip may not be set
@@ -317,7 +317,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		InetAddress serverIP = getServerIP();
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = msg.getChaddr();
+		MACadress chaddr = msg.getChaddr();
 		byte[] sname = new byte[64]; 
 		byte[] file = new byte[128];
 
@@ -361,7 +361,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		InetAddress serverIP = getServerIP();
 		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		byte[] chaddr = msg.getChaddr();
+		MACadress chaddr = msg.getChaddr();
 		byte[] sname = new byte[64]; 
 		byte[] file = new byte[128];
 
