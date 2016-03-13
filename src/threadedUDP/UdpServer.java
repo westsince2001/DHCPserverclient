@@ -167,7 +167,7 @@ public class UdpServer extends Node {
 		DHCPOptions options = new DHCPOptions();
 		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPOFFER.getValue());
 		options.addOption(Options.SERVER_ID, getServerID());
-		options.addOption(Options.LEASE_TIME, 10);
+		options.addOption(Options.LEASE_TIME, Leases.LEASE_TIME);
 		options.addOption(255);
 		
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
@@ -205,8 +205,7 @@ public class UdpServer extends Node {
 		
 		if(isValidIPrequest(msg)){
 			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
-	
-			System.out.println("Lease IP"+requestedIP);
+			
 			getLeases().leaseIP(requestedIP, msg.getChaddr());
 			getLeases().print();
 			
@@ -216,8 +215,7 @@ public class UdpServer extends Node {
 		if(isValidIPextend(msg)){
 			InetAddress requestedIP = msg.getClientIP();
 			
-			System.out.println("Renew IP"+requestedIP);
-			getLeases().extendLease(requestedIP);
+			getLeases().extendLease(requestedIP, msg.getChaddr());
 			getLeases().print();
 			
 			return getAckMsg(msg);
@@ -395,6 +393,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	void processRelease (DHCPMessage msg){
 		// TODO: verwijderen uit pool
 		// Argument: message dat ONTVANGT van client
+		getLeases().release(msg.getClientIP(), msg.getChaddr());
 	}
 
 	

@@ -7,11 +7,6 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Random;
 
-
-
-
-
-
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;

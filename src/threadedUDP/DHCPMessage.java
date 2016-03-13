@@ -295,20 +295,20 @@ public class DHCPMessage {
 	// DEBUGGING
 	public void print() {
 		System.out.print(" MessageType: " + getType());
-		System.out.print("| Opcode: " + getOpcode().getValue());
-		//System.out.print("| Hlen: " + getHlen().getValue());
-		//System.out.print("| Hops: " + getHops());
-		System.out.print("| Transaction ID: " + getTransactionID());
-		//System.out.print("| Number of seconds: " + getNum_of_seconds());
-		System.out.print("| Flags: " + Utils.toHexString(getFlags()));
-		System.out.print("| clientIP: " + getClientIP());
-		System.out.print("| your Client IP: " + getYourClientIP());
-		System.out.print("| server IP: " + getServerIP());
-		//System.out.print("| gateway IP: " + getGatewayIP());
-		System.out.print("| Client Hardware Adresss: " + (getChaddr().toString()));
-		//System.out.print("| Server name: " + Utils.toHexString(getSname()));
-		//System.out.print("| File: " + Utils.toHexString(getFile()));
-		System.out.print("| Options: " + options.toString()); // TODO
+		System.out.print(" | Opcode: " + getOpcode().getValue());
+		//System.out.print(" | Hlen: " + getHlen().getValue());
+		//System.out.print(" | Hops: " + getHops());
+		System.out.print(" | Transaction ID: " + getTransactionID());
+		//System.out.print(" | Number of seconds: " + getNum_of_seconds());
+		System.out.print(" | Flags: " + Utils.toHexString(getFlags()));
+		System.out.print(" | clientIP: " + getClientIP().getHostAddress());
+		System.out.print(" | your Client IP: " + getYourClientIP().getHostAddress());
+		System.out.print(" | server IP: " + getServerIP().getHostAddress());
+		//System.out.print(" | gateway IP: " + getGatewayIP().getHostAddress());
+		System.out.print(" | Client Hardware Adresss: " + (getChaddr().toString()));
+		//System.out.print(" | Server name: " + Utils.toHexString(getSname()));
+		//System.out.print(" | File: " + Utils.toHexString(getFile()));
+		System.out.print(" | Options: " + options.toString()); // TODO
 		System.out.println();
 	}
 }

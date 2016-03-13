@@ -132,7 +132,7 @@ public class DHCPOptions {
 				
 			}else{
 				if(codeItem != null){
-					str += " "+codeItem+"("+code+"): "+Utils.fromBytes(data)+",";
+					str += " "+codeItem+"("+code+"): "+codeItem.toString(data)+",";
 				}else{
 					str += " "+code+": "+Utils.fromBytes(data)+",";
 				}
