@@ -1,5 +1,6 @@
 package threadedUDP;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -68,8 +69,8 @@ public enum MessageType {
 		}
 
 		@Override
-		public void process(DHCPMessage msg, Node node) {
-			// do nothing
+		public void process(DHCPMessage msg, Node node) throws IOException, UnknownMessageTypeException{
+			node.processNak();
 		}
 
 		
@@ -103,7 +104,7 @@ public enum MessageType {
 	//public abstract DHCPMessage generateMsg(DHCPMessage msg) throws UnknownHostException;
 	public abstract DHCPMessage getAnswer(DHCPMessage msg, Node node) throws UnknownHostException;
 	
-	public abstract void process(DHCPMessage msg, Node node);
+	public abstract void process(DHCPMessage msg, Node node) throws IOException, UnknownMessageTypeException;
 	
 	private static HashMap<Integer, MessageType> map = new HashMap<Integer,MessageType>();
     static {

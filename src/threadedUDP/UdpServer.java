@@ -227,7 +227,6 @@ public class UdpServer extends Node {
 
 	@Override
 	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
-		System.out.println("- Generating Ack");
 		Opcode op = Opcode.BOOTREPLY;
 		Htype htype = Htype.ETHERNET;
 		Hlen hlen = Hlen.INTERNET;
@@ -270,14 +269,42 @@ public class UdpServer extends Node {
 	
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
-		System.out.println("-Generating Nak. Not implemented yet, will return NULL");
-		return null;
+		// TODO fields voor NAK!!!! Best maandag doen!
+		
+		Opcode op = Opcode.BOOTREPLY;
+		Htype htype = Htype.ETHERNET;
+		Hlen hlen = Hlen.INTERNET;
+		byte hops = 0; 
+		int transactionID = msg.getTransactionID();
+		short num_of_seconds = 0; 
+		byte[] flags = UNICAST_FLAG;
+		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
+		InetAddress yourClientIP = InetAddress.getByName("99.99.99.99");
+		InetAddress serverIP = getServerIP();
+		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
+		
+		byte[] chaddr = msg.getChaddr();
+		byte[] sname = new byte[64]; 
+		byte[] file = new byte[128];
+
+		DHCPOptions options = new DHCPOptions();
+		options.addOption(53, MessageType.DHCPNAK.getValue());
+		options.addOption(54, getServerID());
+		options.addOption(51, 10);
+		options.addOption(255);
+		
+		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);		
 	}
 
 	@Override
 	DHCPMessage getNakAnswer(DHCPMessage msg) {
 		System.out.println("Server should not answer ACK message!");
 		return null;
+	}
+	
+	@Override
+	void processNak(){
+		// do nothing
 	}
 	
 	// RELEASE
@@ -289,8 +316,7 @@ public class UdpServer extends Node {
 	}
 
 	@Override
-	DHCPMessage getReleaseAnswer(DHCPMessage msg) {
-		System.out.println("Server got release from client");		
+	DHCPMessage getReleaseAnswer(DHCPMessage msg) {		
 		return null;
 	}
 	

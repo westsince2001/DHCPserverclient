@@ -68,9 +68,9 @@ class UdpClient extends Node {
 			sendReleaseMessage();
 			processRelease(null);
 			
-			// Unvalid renewing
-			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set unvalid IP
-			extendUnvalidLeaseFor(3); // TODO: moet NAK krijgen!
+			// Invalid renewing
+			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set invalid IP
+			extendInvalidLeaseFor(3); // TODO: moet NAK krijgen!
 			
 		} catch (Exception e) {
 			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
@@ -108,10 +108,10 @@ class UdpClient extends Node {
 		extendLeaseFor(nbOfSeconds);
 	}
 	
-	public void extendUnvalidLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
+	public void extendInvalidLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
 		// Print
 		System.out.println();
-		System.out.println("##### CLIENT IS EXTENDING UNVALID LEASE #####");
+		System.out.println("##### CLIENT IS EXTENDING INVALID LEASE #####");
 		
 		// Extending lease for nbOfSeconds seconds
 		extendLeaseFor(nbOfSeconds);
@@ -313,7 +313,6 @@ class UdpClient extends Node {
 	
 	@Override
 	void processOffer(DHCPMessage msg){
-		System.out.println("Client cannot process offer");
 		// do nothing
 	}
 
@@ -415,6 +414,17 @@ class UdpClient extends Node {
 	@Override
 	DHCPMessage getNakAnswer(DHCPMessage msg) {
 		return null;
+	}
+	
+	@Override
+	void processNak() throws IOException, UnknownMessageTypeException{
+		// Print
+		System.out.println();
+		System.out.println("##### RECEIVED NAK. TRYING TO GET NEW IP. ######");
+		
+		// Try new IP address
+		sendDiscoveryMsg();
+		processAndAnswerIncomingMessages();
 	}
 
 	// Release

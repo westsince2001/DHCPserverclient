@@ -35,20 +35,26 @@ public class Handler implements Runnable {
 			
 			// Answer message
 			DHCPMessage answer = receivedMessage.getType().getAnswer(receivedMessage, getServer());
-			sendMsg(answer); // answer == null --> caught in catch block!
-			
-			// Process answer
-			answer.getType().process(answer, server);
-			
-			// Print
-			System.out.println("o Server sends " + answer.getType());
-			answer.print();
+			if (answer != null){ // e.g. release
+				sendMsg(answer);
+				
+				// Process answer
+				answer.getType().process(answer, server);
+				
+				// Print
+				System.out.println("o Server sends " + answer.getType());
+				answer.print();
+			}
 			
 		}
 		// Catch exception here and not in UdpServer --> other clients are still being served
 		catch (Exception e) {
-			System.out.println("WARNING: server could not answer received message!");
+			System.out.println("WARNING: server could not correctly answer received message!");
 			e.printStackTrace();
+		}
+		finally{
+			System.out.println();
+			System.out.println("///// Thread is executed //////");
 		}
 	}
 	

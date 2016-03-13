@@ -29,6 +29,7 @@ public abstract class Node {
 	// Not Acknowledge
 	abstract DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException;
 	abstract DHCPMessage getNakAnswer(DHCPMessage msg);
+	abstract void processNak() throws IOException, UnknownMessageTypeException;
 	
 	// Release
 	abstract DHCPMessage getReleaseMsg() throws UnknownHostException;
