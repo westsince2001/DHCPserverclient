@@ -53,10 +53,6 @@ public class Utils {
 	}
 	
 	public static void printHex(byte[] msg){
-//		for(byte b: msg){
-//		 System.out.format("%x",b);
-//		}
-//		System.out.println();
 		System.out.println(toHexString(msg));
 	}
 	
@@ -68,9 +64,5 @@ public class Utils {
 	    return DatatypeConverter.parseHexBinary(s);
 	}
 
-	/** Zet byte[] om naar short **/
-	public static short byteToShort(byte[] bt) {
-		return java.nio.ByteBuffer.wrap(bt).getShort();
-	}
 
 }

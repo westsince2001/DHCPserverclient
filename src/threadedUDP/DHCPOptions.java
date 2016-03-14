@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+
 import DHCPEnum.Options;
 
 public class DHCPOptions {
@@ -24,42 +26,38 @@ public class DHCPOptions {
 	// ADD OPTION
 	
 	public void addOption(Options code, int value) {
-		addOption(code.getValue(), value);
-	}
-
-	public void addOption(byte code, byte[] data ) {
-		options.put(code, data);
-	}
-
-	public void addOption(int code, byte[] data) {
-		options.put((byte) code, data);
+		addOption(code.getValue(), value, code.getDataLength());
 	}
 	
-	public void addOption(int code, int data ) {
-		addOption(code, Utils.toBytes(data));
+	public void addOption(Options code, byte[] value) {
+		addOption(code.getValue(), value, code.getDataLength());
 	}
 	
-	public void addOption(byte code){
-		addOption(code, null);
+	public void addOption(int code, int data , int length) {
+		assert(code <= 255 && code >= 0);
+		addOption((byte) code, Utils.toBytes(data, length));
+	}
+	
+	public void addOption(int code, byte[] data , int length) {
+		assert(code <= 255 && code >= 0);
+		addOption((byte) code, data);
 	}
 	
 	public void addOption(int code){
 		assert(code <= 255 && code >= 0);
-		addOption((byte) code);
+		addOption((byte) code, null);
 	}
 	
-	// GET OPTION
-	public byte[] getOption(byte code) {
-		return options.get(code);
+	public void addOption(byte code, byte[] data ) {
+		options.put(code, data);
 	}
 	
+	// GET OPTION	
 	public byte[] getOption(int code) {
 		assert(code <= 255 && code >= 0);
-		return getOption((byte) code);
+		return options.get((byte) code);
 	}
-	
-	
-	
+		
 	public byte[] getOption(Options option) {
 		return getOption(option.getValue());
 	}
@@ -72,9 +70,6 @@ public class DHCPOptions {
 
 	/**
 	 * Returns an IPadress in 4 bytes
-	 * 
-	 * @return
-	 * @throws UnknownHostException
 	 */
 	public byte[] getMagicCookie() throws UnknownHostException {
 		return InetAddress.getByName("99.130.83.99").getAddress();
@@ -94,7 +89,7 @@ public class DHCPOptions {
 			} else {
 				byte length = options[index + 1];
 				byte[] data = Arrays.copyOfRange(options, index + 2, index + 2 + length);
-				addOption(code, data);
+				addOption((byte) code, data);
 				index = index + 2 + length;
 			}
 
@@ -107,6 +102,8 @@ public class DHCPOptions {
 		for (Map.Entry<Byte, byte[]> entry : options.entrySet()) {
 			int code = entry.getKey()  & 0xFF;
 			byte[] data = entry.getValue();
+			
+			
 			buf.write(code);
 			if( code != 0 && code != 255){
 				buf.write((byte) data.length);

@@ -7,31 +7,60 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.Random;
 
+import com.sun.xml.internal.ws.transport.http.server.ServerAdapter;
+
+import sun.security.x509.IPAddressName;
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
+import DHCPEnum.Options;
 import Exceptions.UnknownMessageTypeException;
 
 class UdpClient extends Node {
 	
 	/* CONSTRUCTOR */
 	
-	public UdpClient() {
+	public UdpClient() throws IOException {
 		setClientSocket(null);
 		setCurrentClientIP(null);
 		currentTransactionID = rand.nextInt((int) Math.pow(2, 32)); // Random transaction id
-		setServerID(null);
-		macAddress = MACaddress.getMacAddressThisComputer();
+		setServerID(0);
 		setLeaseTime(0);
+		macAddress = MACaddress.getMacAddressThisComputer();
+		
 		resetSecondsElapsedSinceAck();
 		setPreviousSentMessage(null);
+		
+		
+		// Read from command line
+		byte[] readData = new byte[1024];
+		BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
+		
+		System.out.println("Server IP adress:");
+		readData =  inFromUser.readLine().getBytes(); //  CW ip 10.33.14.246
+		serverAdress = InetAddress.getByName(new String(readData));		
+		System.out.println("got "+serverAdress.getHostAddress());
+		
+		System.out.println("Server port:");
+		readData = inFromUser.readLine().getBytes();
+		serverPort = Integer.parseInt(new String(readData));
+		System.out.println("got "+serverPort);
 	}
+	
+	final InetAddress serverAdress;
+	final int serverPort;
 	
 	/* MAIN METHOD */
 
-	public static void main(String args[]) {
-		UdpClient client = new UdpClient();
-		client.connectToServer();
+	public static void main(String args[]){		
+		try {
+			UdpClient client = new UdpClient();
+			client.connectToServer();
+		} catch (IOException e) {
+			System.out.println("IO exception!");
+			// TODO: handle exception
+		}
+		
 	}
 	
 	/* CONNECT TO SERVER */
@@ -69,8 +98,8 @@ class UdpClient extends Node {
 			processRelease(null);
 			
 			// Invalid renewing
-			setCurrentClientIP(InetAddress.getByName("0.0.0.1")); // Set invalid IP
-			extendInvalidLeaseFor(3); // TODO: moet NAK krijgen!
+			setCurrentClientIP(InetAddress.getByName("1.1.1.1")); // Set invalid IP
+			extendInvalidLeaseFor(3); //
 			
 		} catch (Exception e) {
 			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
@@ -157,6 +186,7 @@ class UdpClient extends Node {
 		// Process and answer incoming messages until the received message not need to be answered anymore
 		DHCPMessage answer;
 		do{
+			
 			// Receive message (with same transaction ID). If no valid message received after 10 seconds --> resend previous message.
 			DHCPMessage receiveMessage = receiveMessage();
 			
@@ -187,8 +217,8 @@ class UdpClient extends Node {
 		byte[] sendData = msg.encode();
 		
 		// Make sending packet
-		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost"), // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
-				1234); // TODO getPort()
+		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAdress, // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
+				serverPort); // TODO getPort()
 		
 		// Send message
 		getClientSocket().send(sendPacket);
@@ -203,7 +233,6 @@ class UdpClient extends Node {
 		DHCPMessage receivedMsg;
 		byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 		DatagramPacket receivePacket = new DatagramPacket(receiveData,receiveData.length);
-		
 		do{	
 			// Receive packet (nothing received after 10 seconds --> message is resent)
 			receivePacket = receivePacket(receivePacket);
@@ -223,6 +252,7 @@ class UdpClient extends Node {
 		// Listening for message for 10 seconds
 		try{
 			getClientSocket().receive(receivePacket);
+			System.out.println("received something");
 		} 
 		
 		// If after 10 seconds nothing received--> resend message and listen again
@@ -268,26 +298,19 @@ class UdpClient extends Node {
 	@Override
 	DHCPMessage getDiscoverMsg() throws UnknownHostException {
 		Opcode op = Opcode.BOOTREQUEST;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0;
 		int transactionID = getCurrentTransactionID();
-		short num_of_seconds = 0; 
 		byte[] flags = BROADCAST_FLAG;
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
 		MACaddress chaddr = getMacAddress();
-		byte[] sname = new byte[64];
-		byte[] file = new byte[128];
 
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPDISCOVER.getValue());
+		options.addOption(53, MessageType.DHCPDISCOVER.getValue(), 1);
 		options.addOption(255);
 		
-		DHCPMessage answer = new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);
+		DHCPMessage answer = new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
 
 		return answer;
 	}
@@ -296,6 +319,11 @@ class UdpClient extends Node {
 	public DHCPMessage getDiscoverAnswer(DHCPMessage msg) {
 		System.out.println("Client received DHCP_DISCOVER but shouldn't process it.");
 		return null;
+	}
+	
+	@Override
+	void processDiscover(DHCPMessage msg) {
+		
 	}
 
 	// Offer
@@ -324,56 +352,39 @@ class UdpClient extends Node {
 		// ENKEL REQUEST VOOR NA DISCOVER
 
 		Opcode op = Opcode.BOOTREQUEST;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0;
 		int transactionID = getCurrentTransactionID();
-		short num_of_seconds = 0;
 		byte[] flags = BROADCAST_FLAG;
 		
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
-		
 		MACaddress chaddr = getMacAddress();
-		byte[] sname = new byte[64];
-		byte[] file = new byte[128];
+
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPREQUEST.getValue());
-		options.addOption(50, msg.getYourClientIP().getAddress()); // requested IP address  MUST
-		options.addOption(54, msg.getOptions().getOption(54)); // Server identifier MUST
-		options.addOption(255);
+		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPREQUEST.getValue());
+		options.addOption(Options.REQUESTED_IP, msg.getYourClientIP().getAddress()); // requested IP address  MUST
+		options.addOption(Options.SERVER_ID, msg.getOptions().getOption(54)); // Server identifier MUST
+		options.addOption(Options.END, null);
 		
-		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP,
-				chaddr, sname, file, options);
+		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
 	}
 	
 	@Override
 	DHCPMessage extendLeaseRequestMessage() throws UnknownHostException {
 		Opcode op = Opcode.BOOTREQUEST;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0;
 		int transactionID = getCurrentTransactionID();
-		short num_of_seconds = 0;
 		byte[] flags = UNICAST_FLAG;
 		InetAddress clientIP = getCurrentClientIP();
 		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 		
-		MACaddress chaddr = getMacAddress();
-		byte[] sname = new byte[64];
-		byte[] file = new byte[128];
-	
+		MACaddress chaddr = getMacAddress();	
 		
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPREQUEST.getValue());
+		options.addOption(53, MessageType.DHCPREQUEST.getValue(), 1);
 		options.addOption(255);
 		
-		
-		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP, chaddr, sname, file, options);
+		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
 
 	}
 
@@ -381,6 +392,12 @@ class UdpClient extends Node {
 	DHCPMessage getRequestAnswer(DHCPMessage msg) {
 		System.out.println("Client received DHCP_REQUEST but shouldn't process it.");
 		return null;
+	}
+	
+	@Override
+	void processRequest(DHCPMessage msg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	// Acknowledge
@@ -398,7 +415,7 @@ class UdpClient extends Node {
 	@Override
 	void processAck(DHCPMessage msg){
 		setCurrentClientIP(msg.getYourClientIP());
-		setServerID(msg.getOptions().getOption(54));
+		setServerID(Utils.fromBytes(msg.getOptions().getOption(Options.SERVER_ID)));
 		
 		// Reset start time ack
 		resetSecondsElapsedSinceAck();
@@ -406,7 +423,7 @@ class UdpClient extends Node {
 	}
 
 	// Not Acknowledge
-
+	
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
 		return null;
@@ -448,7 +465,7 @@ class UdpClient extends Node {
 	void processRelease(DHCPMessage message){
 		// Delete client IP and server ID 
 		setCurrentClientIP(null);
-		setServerID(null);
+		setServerID(0); // TODO
 		
 		// Reset seconds elapsed since ack and lease time
 		resetSecondsElapsedSinceAck();
@@ -458,29 +475,21 @@ class UdpClient extends Node {
 	@Override
 	DHCPMessage getReleaseMsg() throws UnknownHostException {		
 		Opcode op = Opcode.BOOTREQUEST;
-		Htype htype = Htype.ETHERNET;
-		Hlen hlen = Hlen.INTERNET;
-		byte hops = 0;
 		int transactionID = getCurrentTransactionID();
-		short num_of_seconds = 0;
 		byte[] flags = UNICAST_FLAG;
 ;
 		InetAddress clientIP = getCurrentClientIP();
 		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
 		InetAddress serverIP = InetAddress.getByName("0.0.0.0"); 
-		InetAddress gatewayIP = InetAddress.getByName("0.0.0.0");
 
 		MACaddress chaddr = getMacAddress();
-		byte[] sname = new byte[64];
-		byte[] file = new byte[128];
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPRELEASE.getValue()); 
+		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPRELEASE.getValue()); 
 		// Requested IP adress MUST NOT
-		options.addOption(54, getServerID()); // Server identifier MUST
+		options.addOption(Options.SERVER_ID, getServerID()); // Server identifier MUST
 		options.addOption(255);
 		
-		return new DHCPMessage(op, htype, hlen, hops, transactionID, num_of_seconds, flags, clientIP, yourClientIP, serverIP, gatewayIP,
-				chaddr, sname, file, options);
+		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
 
 	}
 
@@ -495,7 +504,7 @@ class UdpClient extends Node {
 	private InetAddress currentClientIP;
 	private static Random rand = new Random();
 	private int currentTransactionID;
-	private byte[] serverID;
+	private int serverID;
 	private MACaddress macAddress;
 	private DHCPMessage previousSentMessage;
 	
@@ -525,7 +534,10 @@ class UdpClient extends Node {
 	public boolean shouldRenew(){
 		return getLeaseTime()/2 < getSecondsElapsedSinceAck();
 	}
-
+	
+	/** 
+	 * Return the lease time in SECONDS.
+	 */
 	public long getLeaseTime() {
 		return leaseTime;
 	}
@@ -542,11 +554,11 @@ class UdpClient extends Node {
 		this.startLeaseTime = System.currentTimeMillis();
 	}
 
-	public byte[] getServerID() {
+	public int getServerID() {
 		return serverID;
 	}
 
-	public void setServerID(byte[] serverID) {
+	public void setServerID(int serverID) {
 		this.serverID = serverID;
 	}
 
@@ -570,16 +582,6 @@ class UdpClient extends Node {
 		this.previousSentMessage = previousSentMessage;
 	}
 
-	@Override
-	void processDiscover(DHCPMessage msg) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	void processRequest(DHCPMessage msg) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 
 }

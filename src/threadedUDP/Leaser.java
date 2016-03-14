@@ -1,7 +1,5 @@
 package threadedUDP;
 
-import java.net.InetAddress;
-
 public class Leaser {
 	Leaser( MACaddress chaddr, long startTime, long leaseTime){
 		setChaddr(chaddr);
@@ -13,15 +11,6 @@ public class Leaser {
 	private long startTime;
 	private long leaseTime;
 	private MACaddress chaddr;
-	//InetAddress ip;
-//	
-//	public InetAddress getIp() {
-//		return ip;
-//	}
-//	public void setIp(InetAddress ip) {
-//		this.ip = ip;
-//	}
-	
 	
 	public MACaddress getChaddr() {
 		return chaddr;
@@ -40,11 +29,5 @@ public class Leaser {
 	}
 	public void setChaddr(MACaddress chaddr) {
 		this.chaddr = chaddr;
-	}
-	
-	public boolean isConfirmed(){
-		return getStartTime() != 0;
-	}
-	
-	
+	}	
 }

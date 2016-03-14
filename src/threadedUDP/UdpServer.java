@@ -153,7 +153,7 @@ public class UdpServer extends Node {
 			System.out.println("# WARNING: no more available IP's!");
 			return null;
 		}
-		System.out.println("- Offered IP: "+ offeredIP);		
+		System.out.println("- Offered IP: "+ offeredIP.getHostAddress());		
 		
 		Opcode op = Opcode.BOOTREPLY;
 		int transactionID = msg.getTransactionID();
@@ -253,10 +253,19 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		if(Utils.fromBytes(msg.getOption(Options.SERVER_ID)) != this.getServerID()) // server identifier is this server
 			return false;
 		
-		// Check if IP not leased yet
+		// Check if IP is in pool
 		InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
-		if(getLeases().isLeased(requestedIP))
+		if(!getLeases().isInPool(requestedIP)){
+			System.out.println("WARNING: requested IP "+ requestedIP.getHostAddress() +" not in pool!");
 			return false;
+		}
+			
+		
+		// Check if IP not leased yet
+		if(getLeases().isLeased(requestedIP)){
+			System.out.println("WARNING: requested IP "+ requestedIP.getHostAddress() +" already leased!!");
+			return false;
+		}
 		
 		return true;
 	}
@@ -287,10 +296,18 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		if(msg.getOptions().isSet(Options.SERVER_ID)) // server identifier may not be set
 			return false;
 		
-		// Check if IP is already leased to this client
+		// Check if IP is in pool
 		InetAddress requestedIP = msg.getClientIP();
-		if(!getLeases().isLeasedBy(requestedIP, msg.getChaddr()))
+		if(!getLeases().isInPool(requestedIP)){
+			System.out.println("WARNING: requested IP "+ requestedIP.getHostAddress() +" not in pool!");
 			return false;
+		}
+		
+		// Check if IP is already leased to this client
+		if(!getLeases().isLeasedBy(requestedIP, msg.getChaddr())){
+			System.out.println("WARNING: requested IP "+ requestedIP.getHostAddress() +" not leased to this client!");
+			return false;
+		}
 		
 		return true;
 	}
@@ -320,9 +337,9 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		MACaddress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPACK.getValue());
-		options.addOption(54, getServerID());
-		options.addOption(51, 10);
+		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPACK.getValue());
+		options.addOption(Options.SERVER_ID, getServerID());
+		options.addOption(Options.LEASE_TIME, 10);
 		options.addOption(255);
 		
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		
@@ -345,21 +362,18 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
-		// TODO fields voor NAK!!!! Best maandag doen!
-		
 		Opcode op = Opcode.BOOTREPLY;
 		int transactionID = msg.getTransactionID();
 		byte[] flags = UNICAST_FLAG;
 		InetAddress clientIP = InetAddress.getByName("0.0.0.0");
-		InetAddress yourClientIP = InetAddress.getByName("99.99.99.99");
-		InetAddress serverIP = getServerIP();
+		InetAddress yourClientIP = InetAddress.getByName("0.0.0.0");
+		InetAddress serverIP = InetAddress.getByName("0.0.0.0");
 		
 		MACaddress chaddr = msg.getChaddr();
 
 		DHCPOptions options = new DHCPOptions();
-		options.addOption(53, MessageType.DHCPNAK.getValue());
-		options.addOption(54, getServerID());
-		options.addOption(51, 10);
+		options.addOption(Options.MESSAGE_TYPE, MessageType.DHCPNAK.getValue());
+		options.addOption(Options.SERVER_ID, getServerID());
 		options.addOption(255);
 		
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		

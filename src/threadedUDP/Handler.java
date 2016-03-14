@@ -52,10 +52,6 @@ public class Handler implements Runnable {
 			System.out.println("WARNING: server could not correctly answer received message!");
 			e.printStackTrace();
 		}
-		finally{
-			System.out.println();
-			System.out.println("///// Thread is executed //////");
-		}
 	}
 	
 	/* SEND MESSAGE */
