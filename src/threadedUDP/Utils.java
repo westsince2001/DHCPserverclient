@@ -5,64 +5,79 @@ import java.util.Arrays;
 import javax.xml.bind.DatatypeConverter;
 
 public class Utils {
-//	public static void printByteArray(byte[] ba) {
-//		System.out.println("Start printing bytes");
-//		for (byte b : ba) {
-//			System.out.print(b);
-//		}
-//		System.out.println("");
-//		System.out.println("");
-//	}
-
-	/** Deze method moet mss ergens anders komen **/
+	
+	/**
+	 * Returns a selection of a byte array
+	 * @param bt
+	 * @param start
+	 * @param end
+	 * @return
+	 */
 	public static byte[] getByteRange(byte[] bt, int start, int end) {
 		return Arrays.copyOfRange(bt, start, end);
 	}
 
-	//CONVERSIONS: byte[] <-> int
+	// CONVERSIONS: int <-> byte[]
 	
-	//for 4 byte array
-	public static byte[] toBytes(int i)
+	/**
+	 * Returns a byte array of length 4 with the given int
+	 * 
+	 * @param i
+	 * @return
+	 */
+	public static byte[] getBytes(int i)
 	{
-	  byte[] result = new byte[4];
+	  byte[] bt = new byte[4];
 
-	  result[0] = (byte) (i >> 24);
-	  result[1] = (byte) (i >> 16);
-	  result[2] = (byte) (i >> 8);
-	  result[3] = (byte) (i /*>> 0*/);
-
-	  return result;
+	  bt[0] = (byte) (i >> 24);
+	  bt[1] = (byte) (i >> 16);
+	  bt[2] = (byte) (i >> 8);
+	  bt[3] = (byte) (i); /*>> 0*/
+	  return bt;
 	}
 	
-	//for variable byte length
-	public static byte[] toBytes(int i, int length)
+	/**
+	 * Returns a byte array of the given length with the given int
+	 * @param i
+	 * @param length
+	 * @return
+	 */
+	public static byte[] getBytes(int i, int length)
 	{
-	  byte[] result = new byte[length];
+	  byte[] bt = new byte[length];
 	  for(int k=0; k<length; k++){
-		  result[k] = (byte) (i >> (length-1-k)*8);
+		  bt[k] = (byte) (i >> (length - 1 - k)*8);
 	  }
-	  return result;
+	  return bt;
 	}
 	
-	public static int fromBytes(byte[] bytes) {
+	/**
+	 * Returns an int derived from the given byte[]
+	 * @param bt
+	 * @return
+	 */
+	public static int fromBytes(byte[] bt) {
 		int result = 0;
-		for(int k=0; k<bytes.length; k++){
-			result = result | ((bytes[k]  & 0xFF) << (bytes.length-1-k)*8);
+		for(int k=0; k<bt.length; k++){
+			result = result | ((bt[k]  & 0xFF) << (bt.length-1-k)*8);
 		}
 		return result;
 	}
 	
-	public static void printHex(byte[] msg){
-		System.out.println(toHexString(msg));
+	/**
+	 * Prints the given byte in hex characters
+	 * @param bt
+	 */
+	public static void printHex(byte[] bt){
+		System.out.println(toHexString(bt));
 	}
 	
-	public static String toHexString(byte[] array) {
-	    return DatatypeConverter.printHexBinary(array);
+	/**
+	 * Returns a string of the hex representation of the given byte
+	 * @param bt
+	 * @return
+	 */
+	public static String toHexString(byte[] bt) {
+	    return DatatypeConverter.printHexBinary(bt);
 	}
-
-	public static byte[] toByteArray(String s) {
-	    return DatatypeConverter.parseHexBinary(s);
-	}
-
-
 }

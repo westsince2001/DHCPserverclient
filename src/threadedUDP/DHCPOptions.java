@@ -35,7 +35,7 @@ public class DHCPOptions {
 	
 	public void addOption(int code, int data , int length) {
 		assert(code <= 255 && code >= 0);
-		addOption((byte) code, Utils.toBytes(data, length));
+		addOption((byte) code, Utils.getBytes(data, length));
 	}
 	
 	public void addOption(int code, byte[] data , int length) {

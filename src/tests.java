@@ -42,7 +42,7 @@ public class tests {
 		int[] n = new int[]{5,255,23,-5,156,500};
 		
 		for(int i : n){
-			byte[] b = Utils.toBytes(i);	
+			byte[] b = Utils.getBytes(i);	
 			int res = Utils.fromBytes(b);
 			assertEquals(i,res);
 		}
