@@ -4,8 +4,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
-import threadedUDP.DHCPMessage;
-import threadedUDP.Node;
 import threadedUDP.Utils;
 
 public enum Options {

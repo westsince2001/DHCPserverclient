@@ -41,7 +41,7 @@ class UdpClient extends Node {
 		serverAdress = InetAddress.getByName(new String(readData));		
 		System.out.println("got "+serverAdress.getHostAddress());
 		
-		System.out.println("Server port:");
+		System.out.println("port:");
 		readData = inFromUser.readLine().getBytes();
 		serverPort = Integer.parseInt(new String(readData));
 		System.out.println("got "+serverPort);

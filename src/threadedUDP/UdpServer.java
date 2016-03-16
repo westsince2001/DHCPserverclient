@@ -2,6 +2,12 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Properties;
+
+import sun.net.InetAddressCachePolicy;
+
+import com.sun.istack.internal.Pool;
 
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
@@ -22,7 +28,8 @@ public class UdpServer extends Node {
 	
 	/* MAIN METHOD */
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
+		System.out.println(getPool());
 		try{
 			UdpServer server = new UdpServer();
 			server.startServer();
@@ -120,6 +127,21 @@ public class UdpServer extends Node {
 //		String port = pro.getProperty("port");
 //		int result = Integer.parseInt(port);
 //		return result;
+	}
+	
+	private static ArrayList<InetAddress> getPool() throws IOException {
+		Properties pro = new Properties();
+		FileInputStream in = new FileInputStream("src/udpconfig.txt");
+		pro.load(in);
+		ArrayList<InetAddress> pool = new ArrayList<>();
+		String str = pro.getProperty("pool");
+		String[] rr = str.split(",");
+		for(String s : rr){
+			System.out.println(s);
+			pool.add(InetAddress.getByName(s));
+		}
+		
+		return pool;
 	}
 
 
