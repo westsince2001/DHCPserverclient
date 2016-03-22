@@ -27,7 +27,6 @@ class UdpClient extends Node {
 		setServerID(0);
 		setLeaseTime(0);
 		macAddress = MACaddress.getMacAddressThisComputer();
-		
 		resetSecondsElapsedSinceAck();
 		setPreviousSentMessage(null);
 		
@@ -36,19 +35,15 @@ class UdpClient extends Node {
 		byte[] readData = new byte[1024];
 		BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 		
-		System.out.println("Server IP adress:");
+		System.out.println("Server IP adress (10.33.14.246 for CN server):");
 		readData =  inFromUser.readLine().getBytes(); //  CW ip 10.33.14.246
-		serverAdress = InetAddress.getByName(new String(readData));		
-		System.out.println("got "+serverAdress.getHostAddress());
+		serverAddress = InetAddress.getByName(new String(readData));		
 		
-		System.out.println("port:");
+		System.out.println("port (1234 for CN server):");
 		readData = inFromUser.readLine().getBytes();
 		serverPort = Integer.parseInt(new String(readData));
-		System.out.println("got "+serverPort);
 	}
-	
-	final InetAddress serverAdress;
-	final int serverPort;
+
 	
 	/* MAIN METHOD */
 
@@ -57,8 +52,7 @@ class UdpClient extends Node {
 			UdpClient client = new UdpClient();
 			client.connectToServer();
 		} catch (IOException e) {
-			System.out.println("IO exception!");
-			// TODO: handle exception
+			System.out.println("No valid Server IP address or no valid port");
 		}
 		
 	}
@@ -90,16 +84,16 @@ class UdpClient extends Node {
 			// Answer and process Incoming messages
 			processAndAnswerIncomingMessages();
 			
-			// Extend lease for 15 seconds
-			extendValidLeaseFor(15);
+			// Keep IP for 15 seconds (renew if < 50 % lease time)
+			keepIPFor(15);
 			
 			// Release resources
 			sendReleaseMessage();
 			processRelease(null);
 			
-			// Invalid renewing
+			// Illegal renewing
 			setCurrentClientIP(InetAddress.getByName("1.1.1.1")); // Set invalid IP
-			extendInvalidLeaseFor(3); //
+			renewIllegally();
 			
 		} catch (Exception e) {
 			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
@@ -129,54 +123,52 @@ class UdpClient extends Node {
 			getClientSocket().close();				
 	}
 	
-	public void extendValidLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
+	public void renewIllegally() throws IOException, InterruptedException, UnknownMessageTypeException{
 		// Print
 		System.out.println();
-		System.out.println("##### CLIENT IS EXTENDING VALID LEASE FOR 15 SECONDS #####");
+		System.out.println("##### CLIENT IS ILLEGALLY RENEWING AN IP #####");
 		
-		// Extending lease for nbOfSeconds seconds
-		extendLeaseFor(nbOfSeconds);
+		// Renew the current client IP (getCurrentClientIP())
+		renewIP();
 	}
 	
-	public void extendInvalidLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
-		// Print
+	public void keepIPFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
 		System.out.println();
-		System.out.println("##### CLIENT IS EXTENDING INVALID LEASE #####");
-		
-		// Extending lease for nbOfSeconds seconds
-		extendLeaseFor(nbOfSeconds);
-	}
-	
-	public void extendLeaseFor(int nbOfSeconds) throws IOException, InterruptedException, UnknownMessageTypeException{
+		System.out.println("##### CLIENT KEEPS IP FOR " + nbOfSeconds + " SECONDS (renew if < 50 % lease time) (server after 0.005787 %) #####");
 		for(int i = 0;i < nbOfSeconds * 100; i++){
 			// If the lease should be renewed (after 50% of lease) --> extend the lease
 			if (shouldRenew()){
-				DHCPMessage receivedMessage;
-				
-				 // Extend lease
-				 DHCPMessage sendMsg = extendLeaseRequestMessage();
-				 sendMsg(sendMsg);
-				 
-				 // Print sending message
-				 System.out.println("o Client sends renew request after " + getSecondsElapsedSinceAck() + " seconds.");
-				 sendMsg.print();
-				
-				// Receive message (with same transaction ID). If no valid message received after 10 seconds --> resend previous message.
-				 receivedMessage = receiveMessage();
-				 
-				 // Print answer
-				 System.out.println("o Client receives " + receivedMessage.getType());
-				 receivedMessage.print();
-	
-				 // Process answer
-				 receivedMessage.getType().process(receivedMessage,this);
+				renewIP();
 			}
 			else{
 				Thread.sleep(10); // wait 10 milliseconds
 			}	 
 		}
 	}
-
+	
+	// Renew the current IP (getCurrentClientIP())
+	public void renewIP() throws IOException, InterruptedException, UnknownMessageTypeException{
+		 DHCPMessage receivedMessage;
+		
+		 // Extend lease
+		 DHCPMessage sendMsg = extendLeaseRequestMessage();
+		 sendMsg(sendMsg);
+		 
+		 // Print sending message
+		 System.out.println("o Client sends renew request after " + getSecondsElapsedSinceAck() + " seconds.");
+		 sendMsg.print();
+		
+		// Receive message (with same transaction ID). If no valid message received after 10 seconds --> resend previous message.
+		 receivedMessage = receiveMessage();
+		 
+		 // Print answer
+		 System.out.println("o Client receives " + receivedMessage.getType());
+		 receivedMessage.print();
+	
+		 // Process answer
+		 receivedMessage.getType().process(receivedMessage,this);
+	}
+	
 	
 	public void processAndAnswerIncomingMessages() throws IOException, UnknownMessageTypeException{
 		// Print
@@ -217,8 +209,8 @@ class UdpClient extends Node {
 		byte[] sendData = msg.encode();
 		
 		// Make sending packet
-		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAdress, // TODO 10.33.14.246 command line options: localhost of IP: niet recompilen
-				serverPort); // TODO getPort()
+		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress,
+				serverPort);
 		
 		// Send message
 		getClientSocket().send(sendPacket);
@@ -396,8 +388,7 @@ class UdpClient extends Node {
 	
 	@Override
 	void processRequest(DHCPMessage msg) {
-		// TODO Auto-generated method stub
-		
+		// do nothing
 	}
 
 	// Acknowledge
@@ -465,7 +456,7 @@ class UdpClient extends Node {
 	void processRelease(DHCPMessage message){
 		// Delete client IP and server ID 
 		setCurrentClientIP(null);
-		setServerID(0); // TODO
+		setServerID(0);
 		
 		// Reset seconds elapsed since ack and lease time
 		resetSecondsElapsedSinceAck();
@@ -507,6 +498,8 @@ class UdpClient extends Node {
 	private int serverID;
 	private MACaddress macAddress;
 	private DHCPMessage previousSentMessage;
+	final InetAddress serverAddress;
+	final int serverPort;
 	
 	
 	/* GETTERS + SETTERS */
@@ -531,7 +524,10 @@ class UdpClient extends Node {
 	private long leaseTime;
 	
 	
-	public boolean shouldRenew(){
+	public boolean shouldRenew() throws UnknownHostException{
+		if (serverAddress.equals(InetAddress.getByName("10.33.14.246"))){ // dummy because server lease time is 86400 seconds
+			return getLeaseTime()* 0.00005787 < getSecondsElapsedSinceAck();
+		}
 		return getLeaseTime()/2 < getSecondsElapsedSinceAck();
 	}
 	
