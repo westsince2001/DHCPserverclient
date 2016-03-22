@@ -80,4 +80,18 @@ public class Utils {
 	public static String toHexString(byte[] bt) {
 	    return DatatypeConverter.printHexBinary(bt);
 	}
+	
+	/**
+	 * Prints an error message
+	 */
+	public static void printError(String s){
+		System.out.println("ERROR: " +s);
+	}
+	
+	/**
+	 * Prints a warning message
+	 */
+	public static void printWarning(String s){
+		System.out.println("WARNING: " +s);
+	}
 }

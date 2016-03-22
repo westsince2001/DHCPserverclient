@@ -2,12 +2,6 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Properties;
-
-import sun.net.InetAddressCachePolicy;
-
-import com.sun.istack.internal.Pool;
 
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
@@ -22,19 +16,17 @@ public class UdpServer extends Node {
 		
 		this.serverID = 456; // TODO eventueel random
 		
-		getLeases().addNewIP(InetAddress.getByName("1.1.1.1"));
-		getLeases().addNewIP(InetAddress.getByName("2.2.2.2"));
+		getLeases().addNewIPList(config.getPool());
 	}
 	
 	/* MAIN METHOD */
 	
 	public static void main(String[] args) throws IOException {
-		System.out.println(getPool());
 		try{
 			UdpServer server = new UdpServer();
 			server.startServer();
 		} catch(UnknownHostException e){
-			System.out.println("Error: cannot make new server");
+			Utils.printError("Cannot make new server!");
 			e.getStackTrace();
 		}
 	}
@@ -53,9 +45,9 @@ public class UdpServer extends Node {
 		
 		// Create datagram socket
 		try {
-			setServerSocket(new DatagramSocket(getPort()));
+			setServerSocket(new DatagramSocket(config.getPort()));
 		} catch (Exception e) {
-			System.out.println("Error! The datagram socket cannot be constructed!");
+			Utils.printError("The datagram socket cannot be constructed!");
 			e.printStackTrace();
 		}
 
@@ -70,7 +62,7 @@ public class UdpServer extends Node {
 			}
 		}
 		catch(IOException e){
-			System.out.println("Error! The serversocket is being deleted.");
+			Utils.printError("The serversocket is being deleted.");
 			e.printStackTrace();
 			
 		// Release resources after execution
@@ -116,34 +108,6 @@ public class UdpServer extends Node {
 			thread.start(); // run method run in handler
 		}
 	}
-	
-	/* READ FROM TXT FILE */
-
-	private static int getPort() throws IOException {
-		return 1234;
-		//		Properties pro = new Properties();
-//		FileInputStream in = new FileInputStream("src/udpconfig.txt");
-//		pro.load(in);
-//		String port = pro.getProperty("port");
-//		int result = Integer.parseInt(port);
-//		return result;
-	}
-	
-	private static ArrayList<InetAddress> getPool() throws IOException {
-		Properties pro = new Properties();
-		FileInputStream in = new FileInputStream("src/udpconfig.txt");
-		pro.load(in);
-		ArrayList<InetAddress> pool = new ArrayList<>();
-		String str = pro.getProperty("pool");
-		String[] rr = str.split(",");
-		for(String s : rr){
-			System.out.println(s);
-			pool.add(InetAddress.getByName(s));
-		}
-		
-		return pool;
-	}
-
 
 	/* TRANSACTIONS */
 	
@@ -427,9 +391,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	
 	@Override
 	void processRelease (DHCPMessage msg){
-		// TODO: verwijderen uit pool
-		// Argument: message dat ONTVANGT van client
-		getLeases().release(msg.getClientIP(), msg.getChaddr());
+		getLeases().release(msg.getClientIP(), msg.getChaddr());	
 	}
 
 	
@@ -450,6 +412,13 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	private InetAddress getServerIP() throws UnknownHostException {
 		return InetAddress.getByName("localhost");
 	}
+	
+	/* CONFIG */
+	public Config getConfig() {
+		return config;
+	}
+
+	final Config config = new Config();
 	
 	/* LEASING */
 	

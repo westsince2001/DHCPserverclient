@@ -1,7 +1,7 @@
 package threadedUDP;
 
-public class Leaser {
-	Leaser( MACaddress chaddr, long startTime, long leaseTime){
+public class LeasedIP {
+	LeasedIP( MACaddress chaddr, long startTime, long leaseTime){
 		setChaddr(chaddr);
 		setStartTime(startTime);
 		setLeaseTime(leaseTime);

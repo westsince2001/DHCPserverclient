@@ -2,16 +2,8 @@ package threadedUDP;
 
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Properties;
+
 import java.util.Random;
-
-import com.sun.xml.internal.ws.transport.http.server.ServerAdapter;
-
-import sun.security.x509.IPAddressName;
-import DHCPEnum.Hlen;
-import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 import DHCPEnum.Options;
 import Exceptions.UnknownMessageTypeException;
@@ -36,7 +28,7 @@ class UdpClient extends Node {
 		BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 		
 		System.out.println("Server IP adress (10.33.14.246 for CN server):");
-		readData =  inFromUser.readLine().getBytes(); //  CW ip 10.33.14.246
+		readData =  inFromUser.readLine().getBytes();
 		serverAddress = InetAddress.getByName(new String(readData));		
 		
 		System.out.println("port (1234 for CN server):");
@@ -52,7 +44,7 @@ class UdpClient extends Node {
 			UdpClient client = new UdpClient();
 			client.connectToServer();
 		} catch (IOException e) {
-			System.out.println("No valid Server IP address or no valid port");
+			Utils.printError("No valid Server IP address or no valid port");
 		}
 		
 	}
@@ -73,7 +65,7 @@ class UdpClient extends Node {
 		try {
 			setClientSocket(new DatagramSocket());
 		} catch (SocketException e1) {
-			System.out.println("Error! The datagram socket cannot be constructed!");
+			Utils.printError("The datagram socket cannot be constructed!");
 			e1.printStackTrace();
 		}
 		
@@ -92,11 +84,11 @@ class UdpClient extends Node {
 			processRelease(null);
 			
 			// Illegal renewing
-			setCurrentClientIP(InetAddress.getByName("1.1.1.1")); // Set invalid IP
+			setCurrentClientIP(InetAddress.getByName("255.1.1.1")); // Set invalid IP
 			renewIllegally();
 			
 		} catch (Exception e) {
-			System.out.println("Error! The resources are being released and the serversocket is being deleted.");
+			Utils.printError("The resources are being released and the serversocket is being deleted.");
 			e.printStackTrace();
 			
 		// Release resources and closing datagram socket after execution
@@ -166,7 +158,7 @@ class UdpClient extends Node {
 		 receivedMessage.print();
 	
 		 // Process answer
-		 receivedMessage.getType().process(receivedMessage,this);
+		 receivedMessage.getType().process(receivedMessage, this);
 	}
 	
 	
@@ -257,18 +249,6 @@ class UdpClient extends Node {
 		
 		return receivePacket;
 	}
-
-	/* READ FROM TEXT FILE */
-
-	private static int getPort() throws IOException {
-		Properties pro = new Properties();
-		FileInputStream in = new FileInputStream("src/udpconfig.txt");
-		pro.load(in);
-		String port = pro.getProperty("port");
-		int result = Integer.parseInt(port);
-		return result;
-	}
-	
 	
 	/* TRANSACTIONS */
 
@@ -500,7 +480,8 @@ class UdpClient extends Node {
 	private DHCPMessage previousSentMessage;
 	final InetAddress serverAddress;
 	final int serverPort;
-	
+	private long startLeaseTime;
+	private long leaseTime;
 	
 	/* GETTERS + SETTERS */
 	
@@ -519,10 +500,6 @@ class UdpClient extends Node {
 	public void setMacAddress(MACaddress macAddress) {
 		this.macAddress = macAddress;
 	}
-
-	private long startLeaseTime;
-	private long leaseTime;
-	
 	
 	public boolean shouldRenew() throws UnknownHostException{
 		if (serverAddress.equals(InetAddress.getByName("10.33.14.246"))){ // dummy because server lease time is 86400 seconds
@@ -531,10 +508,7 @@ class UdpClient extends Node {
 		return getLeaseTime()/2 < getSecondsElapsedSinceAck();
 	}
 	
-	/** 
-	 * Return the lease time in SECONDS.
-	 */
-	public long getLeaseTime() {
+	public long getLeaseTime() { // Return the lease time in SECONDS.
 		return leaseTime;
 	}
 
@@ -577,6 +551,15 @@ class UdpClient extends Node {
 	public void setPreviousSentMessage(DHCPMessage previousSentMessage) {
 		this.previousSentMessage = previousSentMessage;
 	}
+	
+	/* CONFIG */
+	
+	final Config config = new Config();
+
+	public Config getConfig() {
+		return config;
+	}
+	
 
 	
 
