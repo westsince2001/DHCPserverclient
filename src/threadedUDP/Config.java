@@ -8,8 +8,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
-
 public class Config {
 	private static String DEFAULT_CONFIG_FILE_PATH = "src/udpconfig.txt"; // Lease time in seconds
 	private boolean USE_DEFAULTS = false;

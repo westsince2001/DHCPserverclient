@@ -3,20 +3,17 @@ package threadedUDP;
 import java.io.*;
 import java.net.*;
 
-import DHCPEnum.Hlen;
-import DHCPEnum.Htype;
-import DHCPEnum.Opcode;
-
 public class Handler implements Runnable {
 	
 	/* CONSTRUCTOR */
-	public Handler(UdpServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
+	public Handler(UDPServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
 		this.server = server;
 		this.serverSocket = datagramSocket;
 		this.receivePacket = receivePacket;
 	}
 
 	/* RUN METHOD */
+	@Override
 	public void run() {
 		System.out.println();
 		System.out.println("##### SERVER IS SERVING CLIENT IN THREAD ##### (handler)");
@@ -44,6 +41,7 @@ public class Handler implements Runnable {
 				// Print
 				System.out.println("o Server sends " + answer.getType());
 				answer.print();
+				getServer().getLeases().print();
 			}
 			
 		}
@@ -75,12 +73,12 @@ public class Handler implements Runnable {
 	}
 	
 	/* VARIABLES */
-	final UdpServer server;
+	final UDPServer server;
 	final DatagramSocket serverSocket;
 	final DatagramPacket receivePacket;
 
 	/* GETTERS */
-	public UdpServer getServer() {
+	public UDPServer getServer() {
 		return server;
 	}
 

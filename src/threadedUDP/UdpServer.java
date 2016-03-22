@@ -7,11 +7,11 @@ import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 import DHCPEnum.Options;
 
-public class UdpServer extends Node {
+public class UDPServer extends Node {
 	
 	/* CONSTRUCTOR */
 	
-	public UdpServer() throws UnknownHostException {
+	public UDPServer() throws UnknownHostException {
 		setServerSocket(null);
 		
 		this.serverID = 456; // TODO eventueel random
@@ -23,7 +23,7 @@ public class UdpServer extends Node {
 	
 	public static void main(String[] args) throws IOException {
 		try{
-			UdpServer server = new UdpServer();
+			UDPServer server = new UDPServer();
 			server.startServer();
 		} catch(UnknownHostException e){
 			Utils.printError("Cannot make new server!");
@@ -45,7 +45,7 @@ public class UdpServer extends Node {
 		
 		// Create datagram socket
 		try {
-			setServerSocket(new DatagramSocket(config.getPort()));
+			setServerSocket(new DatagramSocket(getConfig().getPort()));
 		} catch (Exception e) {
 			Utils.printError("The datagram socket cannot be constructed!");
 			e.printStackTrace();
@@ -87,8 +87,8 @@ public class UdpServer extends Node {
 		serverSocket.receive(receivePacket);
 		
 		// print
-		System.out.println();
-		System.out.println("///// server creates thread ///// (Server)");
+		//System.out.println();
+		//System.out.println("///// server creates thread ///// (Server)");
 		
 		return receivePacket;
 	}
@@ -193,7 +193,6 @@ public class UdpServer extends Node {
 			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
 			
 			getLeases().leaseIP(requestedIP, msg.getChaddr());
-			getLeases().print();
 			
 			return getAckMsg(msg);
 		}
@@ -202,7 +201,6 @@ public class UdpServer extends Node {
 			InetAddress requestedIP = msg.getClientIP();
 			
 			getLeases().extendLease(requestedIP, msg.getChaddr());
-			getLeases().print();
 			
 			return getAckMsg(msg);
 		}

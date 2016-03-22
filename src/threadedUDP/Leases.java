@@ -2,6 +2,7 @@ package threadedUDP;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Timer;
@@ -108,13 +109,16 @@ public class Leases {
 	}
 	
 	/**
-	 * Releases a given IP for the client with the given MAC address. The IP should be leased by the user with this IP address, otherwise the assert will fail.
+	 * Releases a given IP for the client with the given MAC address.
+	 * 
+	 * If the user has not leased this IP address, nothing will happen.
 	 * @param ip
 	 * @param chaddr
 	 */
 	void release(InetAddress ip, MACaddress chaddr){
-		assert(isLeasedBy(ip, chaddr));
-		removeLease(ip);
+		if(isLeasedBy(ip, chaddr))
+			removeLease(ip);
+		System.out.println("New pool: "+poolToString());
 	}
 	
 	/**
@@ -122,11 +126,10 @@ public class Leases {
 	 * @param ip
 	 */
 	private void removeLease(InetAddress ip){
-		assert(isLeased(ip));
-		System.out.println("----- LEASE RELEASED: " + ip.getHostAddress() + " -----");
-		
-		
-		leases.put(ip, null); 
+		if(isLeased(ip)){
+			System.out.println("----- LEASE RELEASED: " + ip.getHostAddress() + " -----");
+			leases.put(ip, null);
+		} 
 	}	
 	
 	/**
@@ -232,7 +235,7 @@ public class Leases {
 		for(InetAddress ip : getLeases().keySet()){
 			LeasedIP leaser = getLeases().get(ip);
 			if( leaser != null){
-				str += "| "+ip.getHostAddress()+" - MAC:"+ leaser.getChaddr().toString() + " - StartTime: "+leaser.getStartTime()+" ";
+				str += "| "+ip.getHostAddress()+" - MAC:"+ leaser.getChaddr().toString() + " - StartTime: "+(new Date(leaser.getStartTime()*1000))+" ";
 			}
 		}
 		return str;
@@ -266,6 +269,7 @@ class checkLeaseExpiration extends TimerTask {
       if(leases.isLeaseExpired(ip)){
     	  System.out.println("----- LEASE EXPIRED: " + ip.getHostAddress() + " -----");
     	  leases.release(ip, chaddr);
+    	  leases.print();
       }
     }
 }

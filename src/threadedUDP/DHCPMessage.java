@@ -13,9 +13,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.nio.ByteBuffer;
 
-import javax.xml.bind.DatatypeConverter;
-
-import sun.net.InetAddressCachePolicy;
 import DHCPEnum.Hlen;
 import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
