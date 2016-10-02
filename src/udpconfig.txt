@@ -1,4 +1,4 @@
 port = 1234
 serverip = localhost
-pool = 1.1.1.2-89
-leasetime = 30
+pool = 1.1.1.2-6
+leasetime = 50
