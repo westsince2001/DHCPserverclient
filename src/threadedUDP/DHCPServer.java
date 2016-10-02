@@ -7,31 +7,30 @@ import DHCPEnum.Htype;
 import DHCPEnum.Opcode;
 import DHCPEnum.Options;
 
-public class UDPServer extends Node {
+public class DHCPServer extends Node {
 	
-	/* CONSTRUCTOR */
-	
-	public UDPServer() throws UnknownHostException {
+	/************************************ CONSTRUCTOR *******************************/
+
+	public DHCPServer() throws UnknownHostException {
 		setServerSocket(null);
-		
-		this.serverID = 456; // TODO eventueel random
+		this.serverID = 253;
 		
 		getLeases().addNewIPList(config.getPool());
 	}
 	
-	/* MAIN METHOD */
+	/*************************************** MAIN METHOD *******************************/
 	
 	public static void main(String[] args) throws IOException {
 		try{
-			UDPServer server = new UDPServer();
+			DHCPServer server = new DHCPServer();
 			server.startServer();
 		} catch(UnknownHostException e){
 			Utils.printError("Cannot make new server!");
 			e.getStackTrace();
 		}
 	}
-
-	/* START SERVER */
+	
+	/******************************* START SERVER METHOD *******************************/
 	
 	public void startServer() {
 		System.out.println("###########################");
@@ -42,6 +41,7 @@ public class UDPServer extends Node {
 		System.out.println("#                         #");
 		System.out.println("###########################");
 		System.out.println();
+		System.out.println("///// Server is listening /////");
 		
 		// Create datagram socket
 		try {
@@ -71,36 +71,48 @@ public class UDPServer extends Node {
 			exit(serverSocket);
 		}
 	}
-
-	/* HELPER METHODS FOR startServer() */
 	
+	/************************* HELPER METHODS FOR startServer() *******************************/
+
 	// Server listens until receives packet
+	
+	/**
+	 * Wait until packet is received and then return the message 
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
 	public DatagramPacket receivePacket() throws IOException{
 		byte[] receiveData = new byte[576]; // DHCP packet maximum 576 bytes
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		
-		// print
-		System.out.println();
-		System.out.println("///// server is listening ///// (Server)");
+//		
+//		// print
+//		System.out.println();
+//		System.out.println("///// server is listening ///// (Server)");
 		
 		// Listening until receives packet
 		serverSocket.receive(receivePacket);
 		
-		// print
-		//System.out.println();
-		//System.out.println("///// server creates thread ///// (Server)");
-		
 		return receivePacket;
 	}
 	
-	// Close socket
+	
+	/**
+	 * Closes socket when server is ended
+	 * 
+	 * @param serverSocket
+	 */
 	public void exit(DatagramSocket serverSocket) {
 		if (serverSocket != null) {
 			serverSocket.close();
 		}
 	}
 	
-	// Serve client (in thread)
+	/**
+	 * Serves client. This will create a new thread and ask the handler to process the DatagramPacket receivePacket
+	 * 
+	 * @param receivePacket
+	 */
 	public void serveClient(DatagramPacket receivePacket){
 		if (receivePacket != null){
 			Handler h = new Handler(this, serverSocket, receivePacket);
@@ -108,38 +120,48 @@ public class UDPServer extends Node {
 			thread.start(); // run method run in handler
 		}
 	}
-
-	/* TRANSACTIONS */
 	
-	// Discovery
+	/*************************$***************** TRANSACTIONS ****************************************/
 	
+	 /* Discovery */
+	
+	/**
+	 * Returns a discovery message. Since the server should not send DISCOVER messages, it will return null;
+	 */
 	@Override
 	DHCPMessage getDiscoverMsg() throws UnknownHostException {
 		System.out.println("Server should send to DHCP DISCOVER!");
 		return null;
 	}
-
+	
+	/**
+	 * Returns the answer on the incoming discovery message
+	 * 
+	 * @param DHCPMessage msg
+	 * 				The discover message that is has been received
+	 */
 	@Override
 	DHCPMessage getDiscoverAnswer(DHCPMessage msg) throws UnknownHostException {
+		assert(msg.getType() == MessageType.DHCPDISCOVER);
 		return getOfferMsg(msg);
 	}
 	
-	@Override
-	void processDiscover(DHCPMessage msg) {
-		
-	}
+	/* Offer */
 	
-	// Offer
-	
+	/**
+	 * Returns an offer message, generated as reply  to the given DHCPMessage (which should be a DISCOVER).
+	 * 
+	 * If no IP's are available, null will be returned, because no offer message should be send to the client
+	 */
 	@Override
 	DHCPMessage getOfferMsg(DHCPMessage msg) throws UnknownHostException {
-
+		assert(msg.getType() == MessageType.DHCPDISCOVER);
+		
 		InetAddress offeredIP = getLeases().getNextAvailableIP(); 
 		if(offeredIP == null){
 			System.out.println("# WARNING: no more available IP's!");
 			return null;
-		}
-		System.out.println("- Offered IP: "+ offeredIP.getHostAddress());		
+		}	
 		
 		Opcode op = Opcode.BOOTREPLY;
 		int transactionID = msg.getTransactionID();
@@ -159,26 +181,29 @@ public class UDPServer extends Node {
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);
 	}
 
+	/**
+	 * Returns the answer to an offer message. Since the server should not answer offer messages, this function will return null
+	 */
 	@Override
 	DHCPMessage getOfferAnswer(DHCPMessage msg) throws UnknownHostException {
 		System.out.println("Server should not reply to DHCP OFFER!");
 		return null;
 	}
 	
-	@Override
-	void processOffer(DHCPMessage msg){
-		//TODO pas pool aan
-		// Als argument krijgt deze methode de OFFER message dat de server nu gaat sturen (zie handler)		
-	}
-	
-	// Request
+	/* Request */
 
+	/**
+	 * Returns a new IP request message. Since the server should not send DHCP request messages, it will return null.
+	 */
 	@Override
 	DHCPMessage getNewIPRequestMsg(DHCPMessage msg) throws UnknownHostException {
 		System.out.println("Server should not generate IP REQUEST message!");
 		return null;
 	}
 	
+	/**
+	 * Returns an extend IP request message. Since the server should not send DHCP request messages, nothing should be done.
+	 */
 	@Override
 	DHCPMessage extendLeaseRequestMessage()
 			throws UnknownHostException {
@@ -186,8 +211,15 @@ public class UDPServer extends Node {
 		return null;
 	}
 
+	/**
+	 * Returns a reply to the given DHCPMessage (which should be a REQUEST).
+	 * 
+	 * If the received message is a new IP request message or a valid IP extend request, it will return an ACK message
+	 * Otherwise, it will return a NAK message
+	 */
 	@Override
 	DHCPMessage getRequestAnswer(DHCPMessage msg) throws UnknownHostException {
+		assert(msg.getType() == MessageType.DHCPREQUEST);
 		
 		if(isValidIPrequest(msg)){
 			InetAddress requestedIP = InetAddress.getByAddress(msg.getOption(Options.REQUESTED_IP));
@@ -207,9 +239,17 @@ public class UDPServer extends Node {
 		
 		// OTHERWISE
 		return getNakMsg(msg);
-	}
+	}	
 		
-public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
+	/**
+	 * Checks if given REQUEST message is a valid new IP request message
+	 * 
+	 * @param msg
+	 * @return
+	 * @throws UnknownHostException
+	 */
+	public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
+		assert(msg.getType() == MessageType.DHCPREQUEST);
 		// NEW IP LEASE
 	
 		// Check fields
@@ -230,7 +270,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		
 		// Check options
 		
-		if(!msg.getOptions().isSet(Options.REQUESTED_IP)) // requested ip set TODO check of gelijk aan offered adress!
+		if(!msg.getOptions().isSet(Options.REQUESTED_IP))
 			return false;
 		if(!msg.getOptions().isSet(Options.SERVER_ID)) // server identifier set
 			return false;
@@ -254,7 +294,15 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		return true;
 	}
 	
+	/**
+	 * Checks if given REQUEST message is a valid IP extend request message
+	 * 
+	 * @param msg
+	 * @return
+	 * @throws UnknownHostException
+	 */
 	public boolean isValidIPextend(DHCPMessage msg) throws UnknownHostException{
+		assert(msg.getType() == MessageType.DHCPREQUEST);
 		// EXTEND IP LEASE
 		
 		// Check fields
@@ -296,17 +344,11 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		return true;
 	}
 
-
-
-	@Override
-	void processRequest(DHCPMessage msg) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	/* ACKNOWLEDGE */
 	
-	// Acknowledge
-
+	/**
+	 *  Returns an ACK message as reply to the given DHCPMessage
+	 */
 	@Override
 	DHCPMessage getAckMsg(DHCPMessage msg) throws UnknownHostException {
 		Opcode op = Opcode.BOOTREPLY;
@@ -329,21 +371,20 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		
 	}
 	
+	/**
+	 * Returns a message which should answer an ACK. Since the server should not answer to ACK messages, null will be returned.
+	 */
 	@Override
 	DHCPMessage getAckAnswer(DHCPMessage msg) {
 		System.out.println("Server should not answer ACK message!");
 		return null;
 	}
 	
-	@Override
-	void processAck(DHCPMessage msg) {
-		// TODO Aanpassen in pool
-		// Als argument krijgt ACK Message dat nu gaat zenden!!
-		
-	}
-
-	// Not acknowledge
+	/* NOT ACKNOWLEDGE */
 	
+	/**
+	 *  Returns an NAK message. as response to the given DHCPMessage
+	 */
 	@Override
 	DHCPMessage getNakMsg(DHCPMessage msg) throws UnknownHostException {
 		Opcode op = Opcode.BOOTREPLY;
@@ -363,25 +404,29 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 		return new DHCPMessage(op, transactionID, flags, clientIP, yourClientIP, serverIP, chaddr, options);		
 	}
 
+	/**
+	 *  Returns the answer to a NAK message.
+	 */
 	@Override
 	DHCPMessage getNakAnswer(DHCPMessage msg) {
 		System.out.println("Server should not answer ACK message!");
 		return null;
 	}
 	
-	@Override
-	void processNak(){
-		// do nothing
-	}
-	
-	// RELEASE
+	/* RELEASE */
 
+	/**
+	 * Returns a RELEASE message. Since the server should not send DHCP request messages, it will return null.
+	 */
 	@Override
 	DHCPMessage getReleaseMsg() throws UnknownHostException {
 		System.out.println("Server should not send RELEASE message!");
 		return null;
 	}
-
+	
+	/**
+	 * Returns the answer to a RELEASE message. Since a release message should not be answered, it will return null.
+	 */
 	@Override
 	DHCPMessage getReleaseAnswer(DHCPMessage msg) {		
 		return null;
@@ -389,11 +434,14 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	
 	@Override
 	void processRelease (DHCPMessage msg){
-		getLeases().release(msg.getClientIP(), msg.getChaddr());	
+		getLeases().release(msg.getClientIP(), msg.getChaddr());
 	}
-
 	
-	/* GETTERS AND SETTERS */
+	/************************************* GETTERS AND SETTERS ********************************************/
+	
+	/* VARIABLES */
+	DatagramSocket serverSocket;
+	final int serverID;	
 	
 	public DatagramSocket getServerSocket() {
 		return serverSocket;
@@ -412,6 +460,7 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	}
 	
 	/* CONFIG */
+	
 	public Config getConfig() {
 		return config;
 	}
@@ -421,8 +470,6 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	/* LEASING */
 	
 	Leases leases = new Leases();
-	
-	/* VARIABLES */
 
 	public Leases getLeases() {
 		return leases;
@@ -431,8 +478,5 @@ public boolean isValidIPrequest(DHCPMessage msg) throws UnknownHostException{
 	public void setLeases(Leases leases) {
 		this.leases = leases;
 	}
-
-	DatagramSocket serverSocket;
-	final int serverID;	
 	
 }

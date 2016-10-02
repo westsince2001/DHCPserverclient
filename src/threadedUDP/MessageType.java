@@ -92,6 +92,7 @@ public enum MessageType {
 	public abstract DHCPMessage getAnswer(DHCPMessage msg, Node node) throws UnknownHostException;
 	public abstract void process(DHCPMessage msg, Node node) throws IOException, UnknownMessageTypeException;
 	
+	/********************************************** VARIABLES *************************************/
 	
 	int value;
 	
@@ -99,16 +100,19 @@ public enum MessageType {
         this.value = val;
     }
 	
-	public int getValue() {
-		return value;
-	}	
-	
 	private static HashMap<Integer, MessageType> map = new HashMap<Integer,MessageType>();
     static {
     	for(MessageType msgType : MessageType.values()){
             map.put(msgType.value, msgType);
         }
     }
+    
+    /********************************************** GETTERS ****************************************************/
+	
+	public int getValue() {
+		return value;
+	}	
+	
 
     public static MessageType getByVal(int val) {
         return map.get(val);

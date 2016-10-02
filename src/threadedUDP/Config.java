@@ -13,7 +13,6 @@ public class Config {
 	private boolean USE_DEFAULTS = false;
 	
 	
-
 	public Config(String file){
 		if(file == null)
 			USE_DEFAULTS = true;
@@ -69,10 +68,26 @@ public class Config {
 		String str = getProperties().getProperty("pool");
 		assert(str != null);
 		
-		String[] rr = str.split(",");
-		for(String s : rr){
+		String[] poolString = str.split(", ");
+		for(String IPentry : poolString){
 			try {
-				pool.add(InetAddress.getByName(s));
+				if(IPentry.contains("-")){
+					String[] splitted = IPentry.split("\\.");
+					assert(splitted.length == 4);
+					
+					String endPart = splitted[3];
+					String[] range = endPart.split("-");
+					int startIP = Integer.parseInt(range[0]);
+					int endIP = Integer.parseInt(range[1]);
+					
+					for(int i = startIP; i <= endIP; i++){
+						String IPstr = splitted[0]+"."+splitted[1]+"."+splitted[2]+"."+i;
+						pool.add(InetAddress.getByName(IPstr));
+					}	
+				}else{
+					pool.add(InetAddress.getByName(IPentry));
+				}
+				
 			} catch (UnknownHostException e) {
 				Utils.printWarning("GETTING POOL: UnknownHostException!");
 				e.printStackTrace();

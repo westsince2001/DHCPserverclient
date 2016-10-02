@@ -1,17 +1,20 @@
 package threadedUDP;
 
 public class LeasedIP {
+	
+	/**************************************************CONSTRUCTOR***********************************************************/
 	LeasedIP( MACaddress chaddr, long startTime, long leaseTime){
 		setChaddr(chaddr);
 		setStartTime(startTime);
 		setLeaseTime(leaseTime);
 	}
 	
-	
+	/***************************************************** VARIABLES ****************************************************/
 	private long startTime;
 	private long leaseTime;
 	private MACaddress chaddr;
 	
+	/********************************************** GETTERS AND SETTERS ************************************************/
 	public MACaddress getChaddr() {
 		return chaddr;
 	}

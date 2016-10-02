@@ -42,6 +42,7 @@ public enum Options {
 		}
 	};	
 	
+	/************************************* HELPER FUNCTIONS *************************************/
 	int value;
 	int datalength;
 	

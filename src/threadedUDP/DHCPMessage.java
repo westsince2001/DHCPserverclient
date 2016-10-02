@@ -21,6 +21,8 @@ import Exceptions.UnknownMessageTypeException;
 
 public class DHCPMessage {
 	
+	/*********************************************************************** CONSTRUCTOR ***********************************************************************************************/
+	
 	/** Creates a new DHCPMesssage with given parameters **/
 	public DHCPMessage(Opcode op, Htype htype, Hlen hlen, byte hops, int transactionID, short num_of_seconds, byte[] flags, InetAddress clientIP,
 		InetAddress yourClientIP, InetAddress serverIP, InetAddress gatewayIP, MACaddress chaddr, byte[] sname, byte[] file, DHCPOptions options) {
@@ -44,17 +46,11 @@ public class DHCPMessage {
 	public DHCPMessage(Opcode op, int transactionID, byte[] flags, InetAddress clientIP, InetAddress yourClientIP, InetAddress serverIP, MACaddress chaddr, DHCPOptions options) throws UnknownHostException {
 		this(op, Htype.ETHERNET, Hlen.INTERNET, (byte) 0, transactionID, (short) 0, flags, clientIP, yourClientIP, serverIP, InetAddress.getByName("0.0.0.0"), chaddr, new byte[0], new byte[0], options);
 	}
-
-	/** Creates empty DHCPMessage **/
-	public DHCPMessage() {
-		// TODO dit klopt niet aangezien sommige objects null zijn, en da's nie
-		// fijn. Sowieso mag deze methode nergens gebruikt worden om een echte
-		// "valid" msg te maken
-	}
-
+	
 	/**
-	 * creates a new DHCPMessage with as parameters the parameters of the
-	 * decoded byte array
+	 * DECODE
+	 * Creates a new DHCPMessage with as parameters the parameters of the
+	 * decoded byte array.
 	 * 
 	 * @throws UnknownHostException
 	 * @throws UnknownMessageTypeException 
@@ -79,68 +75,74 @@ public class DHCPMessage {
 		if(getType() == null)
 			throw new UnknownMessageTypeException();
 	}
+	
+	/************************************************************ ENCODE ********************************************************************************/
 
 	/**
-	 * Returns a message in DHCP format
+	 * Returns a byte array in in DHCP format
 	 * 
 	 * @return
 	 * @throws IOException
 	 */
 	public byte[] encode() throws IOException {
-		boolean debugEncodingLength = false;
-
 		byte[] byteMsg = new byte[236+getOptions().encode().length];
 		
 		ByteBuffer buf = ByteBuffer.wrap(byteMsg);
 
 		buf.put((byte) getOpcode().getValue());
-		if (debugEncodingLength)
-			System.out.println("na opcode " + buf.position());
 		buf.put((byte) getHtype().getValue());
-		if (debugEncodingLength)
-			System.out.println("na Htype " + buf.position());
 		buf.put((byte) getHlen().getValue());
-		if (debugEncodingLength)
-			System.out.println("Na Hlen " + buf.position());
 		buf.put((byte) getHops());
-		if (debugEncodingLength)
-			System.out.println("getHops() " + buf.position());
 		buf.putInt(getTransactionID());
-		if (debugEncodingLength)
-			System.out.println("getTransactionId() " + buf.position());
 		buf.putShort(getNum_of_seconds());
-		if (debugEncodingLength)
-			System.out.println("nb of seconds " + buf.position());
 		buf.put(Arrays.copyOfRange(getFlags(),0,2));
-		if (debugEncodingLength)
-			System.out.println("flags " + buf.position());
 		buf.put(getClientIP().getAddress());
-		if (debugEncodingLength)
-			System.out.println("clientIp " + buf.position());
 		buf.put(getYourClientIP().getAddress());
-		if (debugEncodingLength)
-			System.out.println("YourClientIp " + buf.position());
 		buf.put(getServerIP().getAddress());
-		if (debugEncodingLength)
-			System.out.println("serverIP " + buf.position());
 		buf.put(getGatewayIP().getAddress());
-		if (debugEncodingLength)
-			System.out.println("gatewayIP " + buf.position());
 		buf.put(Arrays.copyOfRange(getChaddr().toBytes(), 0, 16));
-		if (debugEncodingLength)
-			System.out.println("MAC " + buf.position());
 		buf.put(Arrays.copyOfRange(getSname(),0, 64));
-		if (debugEncodingLength)
-			System.out.println("sname " + buf.position());
 		buf.put(Arrays.copyOfRange(getFile(),0, 128));
-		if (debugEncodingLength)
-			System.out.println("file " + buf.position());
 		buf.put(getOptions().encode());
-		if (debugEncodingLength)
-			System.out.println("options " + buf.position());
+		
 		return byteMsg;
-
 	}
+	
+//	0                   1                   2                   3
+//	   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//	   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//	   |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+//	   +---------------+---------------+---------------+---------------+
+//	   |                            xid (4)                            |
+//	   +-------------------------------+-------------------------------+
+//	   |           secs (2)            |           flags (2)           |
+//	   +-------------------------------+-------------------------------+
+//	   |                          ciaddr  (4)                          |
+//	   +---------------------------------------------------------------+
+//	   |                          yiaddr  (4)                          |
+//	   +---------------------------------------------------------------+
+//	   |                          siaddr  (4)                          |
+//	   +---------------------------------------------------------------+
+//	   |                          giaddr  (4)                          |
+//	   +---------------------------------------------------------------+
+//	   |                                                               |
+//	   |                          chaddr  (16)                         |
+//	   |                                                               |
+//	   |                                                               |
+//	   +---------------------------------------------------------------+
+//	   |                                                               |
+//	   |                          sname   (64)                         |
+//	   +---------------------------------------------------------------+
+//	   |                                                               |
+//	   |                          file    (128)                        |
+//	   +---------------------------------------------------------------+
+//	   |                                                               |
+//	   |                          options (variable)                   |
+//	   +---------------------------------------------------------------+
+
+
+	
+	/************************************************************************************************************************/
 
 	Opcode opcode;
 	Htype htype;
@@ -158,6 +160,8 @@ public class DHCPMessage {
 	byte[] file;
 	MessageType type;
 	DHCPOptions options;
+	
+	/***************************************************** GETTERS AND SETTERS *******************************************************/
 
 	public Opcode getOpcode() {
 		return opcode;

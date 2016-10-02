@@ -6,7 +6,7 @@ import java.net.*;
 public class Handler implements Runnable {
 	
 	/* CONSTRUCTOR */
-	public Handler(UDPServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
+	public Handler(DHCPServer server, DatagramSocket datagramSocket, DatagramPacket receivePacket) {
 		this.server = server;
 		this.serverSocket = datagramSocket;
 		this.receivePacket = receivePacket;
@@ -15,8 +15,7 @@ public class Handler implements Runnable {
 	/* RUN METHOD */
 	@Override
 	public void run() {
-		System.out.println();
-		System.out.println("##### SERVER IS SERVING CLIENT IN THREAD ##### (handler)");
+		System.out.println("\n##### SERVER IS SERVING CLIENT IN THREAD! #####");
 		try {		
 			
 			// Decode received message
@@ -42,6 +41,7 @@ public class Handler implements Runnable {
 				System.out.println("o Server sends " + answer.getType());
 				answer.print();
 				getServer().getLeases().print();
+				System.out.println("  Available IP's: " + getServer().getLeases().availableIpToString());
 			}
 			
 		}
@@ -61,7 +61,7 @@ public class Handler implements Runnable {
 	 * */
 	private void sendMsg(DHCPMessage msg) throws IOException {
 		// Message to bytes
-		byte[] sendData = msg.encode(); // TODO: geeft error na ack na release van client
+		byte[] sendData = msg.encode();
 		
 		// Make sending packet
 		DatagramPacket sendPacket = new DatagramPacket(sendData,
@@ -73,12 +73,12 @@ public class Handler implements Runnable {
 	}
 	
 	/* VARIABLES */
-	final UDPServer server;
+	final DHCPServer server;
 	final DatagramSocket serverSocket;
 	final DatagramPacket receivePacket;
 
 	/* GETTERS */
-	public UDPServer getServer() {
+	public DHCPServer getServer() {
 		return server;
 	}
 

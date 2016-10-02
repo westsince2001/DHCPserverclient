@@ -1,6 +1,7 @@
 package threadedUDP;
 
 import java.net.InetAddress;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class Leases {
 	 * @return
 	 */
 	public Set<InetAddress> getPool(){
-		return leases.keySet();
+		return poolMap.keySet();
 		
 	}
 	
@@ -36,8 +37,8 @@ public class Leases {
 	 */
 	void addNewIP(InetAddress ip){
 		if(!isInPool(ip)){
-			leases.put(ip, null);
-			System.out.println("Added new IP. New IP Pool: "+poolToString());
+			poolMap.put(ip, null);
+			System.out.println("Added new IP. New IP Pool: "+availableIpToString());
 		}
 			
 	}
@@ -60,7 +61,7 @@ public class Leases {
 	 * @return
 	 */
 	boolean isInPool(InetAddress ip){
-		return getLeases().containsKey(ip);
+		return getPoolMap().containsKey(ip);
 	}
 	
 	/**
@@ -79,13 +80,12 @@ public class Leases {
 	 * @param chaddr
 	 */
 	void leaseIP(InetAddress ip, MACaddress chaddr){
-		System.out.println("----- NEW LEASE: "+ip.getHostAddress()+" -----");
 		assert(isInPool(ip));
 		assert(!isLeased(ip));
 		
 		
 		long startTime = getCurrentTimeSeconds(); // start time in seconds
-		leases.put(ip, new LeasedIP(chaddr, startTime, LEASE_TIME));
+		poolMap.put(ip, new LeasedIP(chaddr, startTime, LEASE_TIME));
 		
 		Timer timer = new Timer();
 		timer.schedule(new checkLeaseExpiration(this, ip, chaddr), LEASE_TIME*1000);
@@ -97,7 +97,6 @@ public class Leases {
 	 * @param chaddr
 	 */
 	void extendLease(InetAddress ip, MACaddress chaddr){ 
-		System.out.println("----- EXTENDING LEASE: "+ip.getHostAddress()+" -----");
 		assert(isInPool(ip));
 		assert(isLeasedBy(ip, chaddr));
 		
@@ -116,9 +115,11 @@ public class Leases {
 	 * @param chaddr
 	 */
 	void release(InetAddress ip, MACaddress chaddr){
-		if(isLeasedBy(ip, chaddr))
+		if(isLeasedBy(ip, chaddr)){
 			removeLease(ip);
-		System.out.println("New pool: "+poolToString());
+			print();
+			System.out.println("  Available IP's: " + availableIpToString());
+		}
 	}
 	
 	/**
@@ -127,8 +128,7 @@ public class Leases {
 	 */
 	private void removeLease(InetAddress ip){
 		if(isLeased(ip)){
-			System.out.println("----- LEASE RELEASED: " + ip.getHostAddress() + " -----");
-			leases.put(ip, null);
+			poolMap.put(ip, null);
 		} 
 	}	
 	
@@ -142,7 +142,7 @@ public class Leases {
 	 */
 	private LeasedIP getLeaser(InetAddress ip){
 		assert(isInPool(ip));
-		return leases.get(ip);
+		return poolMap.get(ip);
 	}
 	
 	/**
@@ -176,7 +176,7 @@ public class Leases {
 	}
 	
 	/**
-	 * Checks if 
+	 * Checks if the given IP address is leased by the given MAC address.
 	 * @param ip
 	 * @param chaddr
 	 * @return
@@ -191,19 +191,23 @@ public class Leases {
 		return true;
 	}
 	
-	HashMap<InetAddress, LeasedIP> leases = new HashMap<>();
+	/************************************************* VARIABLES **********************************************************/
 	
-	public HashMap<InetAddress, LeasedIP> getLeases() {
-		return leases;
+	HashMap<InetAddress, LeasedIP> poolMap = new HashMap<>();
+	
+	public HashMap<InetAddress, LeasedIP> getPoolMap() {
+		return poolMap;
 	}
+	
+	/************************************************** GETTERS AND SETTERS ****************************************************/
 
-	public void setLeases(HashMap<InetAddress, LeasedIP> leases) {
-		this.leases = leases;
+	public void setPoolMap(HashMap<InetAddress, LeasedIP> leases) {
+		this.poolMap = leases;
 	}
 	
 	InetAddress getNextAvailableIP(){
-		for(InetAddress ip : getLeases().keySet()){
-			if( getLeases().get(ip) == null){
+		for(InetAddress ip : getPoolMap().keySet()){
+			if( getPoolMap().get(ip) == null){
 				return ip;
 			}
 		}
@@ -211,8 +215,8 @@ public class Leases {
 	}
 	
 	public InetAddress getIPbyMAC(MACaddress chaddr) {
-		for(InetAddress ip : getLeases().keySet()){
-			LeasedIP leaser = getLeases().get(ip);
+		for(InetAddress ip : getPoolMap().keySet()){
+			LeasedIP leaser = getPoolMap().get(ip);
 			if( leaser != null && leaser.getChaddr().equals(chaddr)){
 				return ip;
 			}
@@ -220,32 +224,47 @@ public class Leases {
 		return null;
 	}
 	
+	/********************************************* TO STRING ***************************************************/
 	
-	public String poolToString(){
+	/**
+	 * Convert the available ip's to string.
+	 * 
+	 * @return
+	 */
+	public String availableIpToString(){
 		String str = "";
-		for(InetAddress ip : getLeases().keySet()){
+		for(InetAddress ip : getPoolMap().keySet()){
+			if (!isLeased(ip))
 				str += ip.getHostAddress()+", ";
 		}
 		return str;
 	}
 	
+	/**
+	 * Convert this object to string
+	 */
 	@Override
 	public String toString(){
-		String str = "Leases : ";
-		for(InetAddress ip : getLeases().keySet()){
-			LeasedIP leaser = getLeases().get(ip);
+		String str = "o Leases: ";
+		for(InetAddress ip : getPoolMap().keySet()){
+			LeasedIP leaser = getPoolMap().get(ip);
 			if( leaser != null){
-				str += "| "+ip.getHostAddress()+" - MAC:"+ leaser.getChaddr().toString() + " - StartTime: "+(new Date(leaser.getStartTime()*1000))+" ";
+				Date date = new Date(leaser.getStartTime()*1000);
+				SimpleDateFormat dt = new SimpleDateFormat("hh:mm:ss");
+				str += ip.getHostAddress()+ " [" + leaser.getChaddr().toString() + " - " + dt.format(date)+"] | ";
 			}
 		}
 		return str;
 	}
 	
+	/**
+	 * Print this object
+	 */
 	public void print(){
 		System.out.println(toString());
 	}
 	
-	/* CONFIG */
+	/******************************************************CONFIG ******************************************************/
 	final Config config = new Config();
 	
 	public Config getConfig() {
@@ -253,6 +272,10 @@ public class Leases {
 	}
 }
 
+/**
+ * Timer will be executed to check if lease is expired. If lease is expired, it will be removed from the leases.
+ *
+ */
 class checkLeaseExpiration extends TimerTask {
 	private Leases leases;
 	private InetAddress ip;
@@ -267,9 +290,8 @@ class checkLeaseExpiration extends TimerTask {
     @Override
 	public void run() {
       if(leases.isLeaseExpired(ip)){
-    	  System.out.println("----- LEASE EXPIRED: " + ip.getHostAddress() + " -----");
+    	  System.out.println("\n----- LEASE EXPIRED: " + ip.getHostAddress() + " -----");
     	  leases.release(ip, chaddr);
-    	  leases.print();
       }
     }
 }
